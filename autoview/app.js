@@ -2213,6 +2213,8 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeMod
 try {
   const bootMode = new URLSearchParams(location.search).get('boot');
   if (bootMode === 'editor') {
+    state.loggedIn = true;            // populate the Project sidebar tree
+    state.sidebarCollapsed = false;   // show the sidebar expanded
     seedEditor('Revenue Analytics');
     state.view = 'editor';
     state.editorTab = 'preview';
