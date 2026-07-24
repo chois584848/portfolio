@@ -66,7 +66,8 @@
   .empty-hint{position:absolute;left:50%;bottom:30px;transform:translateX(-50%);font-size:11px;color:#a2a2a2;background:#ffffffcc;padding:5px 12px;border-radius:20px;white-space:nowrap;backdrop-filter:blur(2px)}
 
   /* right: Context Generator plugin */
-  .right{width:300px;flex:0 0 300px;background:var(--panel);border-left:1px solid var(--panel-line);display:flex;flex-direction:column;min-height:0}
+  .right{width:520px;flex:0 0 520px;background:var(--panel);border-left:1px solid var(--panel-line);display:flex;flex-direction:column;min-height:0}
+  .plugin-frame{flex:1;width:100%;border:0;background:#8a8a8a;display:block}
   .r-figtabs{height:40px;display:flex;align-items:center;gap:4px;padding:0 10px;border-bottom:1px solid var(--panel-line)}
   .r-figtab{font-size:12px;font-weight:600;color:var(--ink-3);padding:6px 4px;cursor:default}
   .r-figtab.active{color:var(--ink)}
@@ -183,29 +184,7 @@
         <div class="r-figtab">Prototype</div>
         <div class="r-figtab active">Plugins</div>
       </div>
-      <div class="plugin">
-        <div class="pl-head">
-          <span class="pl-logo">◑</span>
-          <span class="pl-title">Context Generator</span>
-          <span class="pl-dot">···</span>
-        </div>
-        <div class="pl-tabs">
-          <div class="pl-tab active">Preview</div>
-          <div class="pl-tab">Code</div>
-          <div class="pl-tab">Markdown</div>
-          <div class="pl-tab">JSON</div>
-        </div>
-        <div class="pl-body">
-          <div class="pl-illo">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 3v18M17 3v18M3 7h18M3 17h18"/></svg>
-          </div>
-          <div class="pl-msg"><b>Select one or more components / frames.</b><br>The semantic context is generated automatically.</div>
-        </div>
-        <div class="pl-foot">
-          <div class="pl-gen">Generate context</div>
-          <span class="pl-mini">0 selected</span>
-        </div>
-      </div>
+      <iframe class="plugin-frame" src="context-generator.html" title="Context Generator" loading="eager"></iframe>
     </div>
 
   </div>
