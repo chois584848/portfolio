@@ -2207,4 +2207,15 @@ document.addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeModal(); closeCtx(); } });
 
 // ===================== Boot =====================
+// Deep-link boot state (used when embedded as a case-study mockup):
+// ?boot=editor lands directly in the editor with a seeded conversation
+// + applied version so the preview and left panel are already populated.
+try {
+  const bootMode = new URLSearchParams(location.search).get('boot');
+  if (bootMode === 'editor') {
+    seedEditor('Revenue Analytics');
+    state.view = 'editor';
+    state.editorTab = 'preview';
+  }
+} catch (e) { /* no-op: fall back to home */ }
 render();

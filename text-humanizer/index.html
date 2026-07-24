@@ -857,6 +857,9 @@
   themeIcon();document.body.classList.add('show-chg');
   try{const d=localStorage.getItem('th_draft');if(d&&d.trim()){$('#src-text').value=d;toast('Restored your last draft');}}catch(e){}
   updateCount();
+  // Case-study mockup: boot with the first example already humanized so the
+  // result view is visible as the thumbnail (no user interaction required).
+  try{var _bs=SAMPLES[0];$('#src-text').value=_bs.text;updateCount();setTone(_bs.tone[0],_bs.tone[1]);doConvert(false);}catch(e){}
 </script>
 </body>
 </html>
