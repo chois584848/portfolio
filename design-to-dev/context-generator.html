@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="ko"><head><meta charset="utf-8" /><title>Context Generator — preview</title><style>
+<html lang="ko"><head>
+<meta name="color-scheme" content="light"><meta charset="utf-8" /><title>Context Generator — preview</title><style>
   :root {
     --bg: var(--figma-color-bg, #ffffff);
     --bg2: var(--figma-color-bg-secondary, #f2f3f5);
@@ -264,7 +265,7 @@
 
   body { background: #ffffff; margin: 0; padding: 0; }
   #root { width: 480px; height: 660px; flex-shrink: 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,.25); }
-  @media (prefers-color-scheme: dark) {
+  @media (prefers-color-scheme: dark) and (min-width: 999999px) {
     :root {
       --figma-color-bg: #2c2c2c; --figma-color-bg-secondary: #383838; --figma-color-bg-tertiary: #4a4a4a;
       --figma-color-text: #fff; --figma-color-text-secondary: #b3b3b3; --figma-color-border: #4a4a4a;
