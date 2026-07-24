@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Summarizer · wrtn (prototype)</title>
+<script>try{if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light')}catch(e){}</script>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0D0D0D;
+    --topbar:#0D0D0D;
+    --panel:#1A1A1A;
+    --card:#212121;
+    --field:#1E1E1E;
+    --chip:#262626;
+    --line:#2D2D2D;
+    --line-soft:#202020;
+    --ink:#F2F2F2;
+    --ink-2:#ABABAB;
+    --ink-3:#6C6C6C;
+    --red:#F54211;          /* wrtn Inspire Red — primary action */
+    --red-press:#DB380D;
+    --red-soft:#3A1508;
+    --gold:#C9A24A;
+    --yt:#FF0000;
+    font-family:"Pretendard","Apple SD Gothic Neo",system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5;overflow:hidden}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  a{color:inherit;text-decoration:none}
+  input,textarea{font-family:inherit}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:#333333;border-radius:9px}
+  ::-webkit-scrollbar-track{background:transparent}
+
+  .app{display:flex;height:100vh}
+
+  /* Rail */
+  .rail{width:72px;flex-shrink:0;background:#0B0B0B;display:flex;flex-direction:column;align-items:center;
+    padding:18px 0;gap:8px}
+  .rail .logo{margin-bottom:22px;display:flex;align-items:center;justify-content:center;line-height:0}
+  .rail-item{display:flex;flex-direction:column;align-items:center;gap:6px;width:60px;padding:4px 0;border-radius:14px;
+    color:var(--ink-3);font-size:11px;font-weight:500}
+  .rail-item svg{width:21px;height:21px}
+  .rail-item:hover{color:var(--ink-2)}
+  .rail-item.active{color:var(--ink)}
+  .rail-item.active .ic-box{background:var(--chip)}
+  .ic-box{width:40px;height:40px;border-radius:12px;display:grid;place-items:center}
+
+  /* Main */
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .topbar{height:62px;flex-shrink:0;display:flex;align-items:center;padding:0 24px;gap:14px;background:var(--topbar)}
+  .topbar h1{font-size:21px;font-weight:700;letter-spacing:-.3px}
+  .topbar .right{margin-left:auto;display:flex;align-items:center;gap:18px}
+  .topbar .ico{color:var(--ink-2);position:relative;display:flex;transition:color .15s,background .15s}
+  .topbar .ico:hover{color:var(--ink)}
+  .topbar .profile{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.1);display:grid;place-items:center}
+  .topbar .profile:hover{background:rgba(255,255,255,.16)}
+  .topbar .dot{position:absolute;top:-2px;right:-2px;width:7px;height:7px;border-radius:50%;background:var(--red)}
+
+  .panels{flex:1;display:flex;gap:14px;padding:0 16px 16px;min-height:0}
+  .panel{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0;
+    background:var(--panel);border:1px solid var(--line-soft);border-radius:18px;overflow:hidden}
+  .panel.right{flex:1.05}
+  .divider{display:none}
+
+  /* Source tabs */
+  .src-tabs{display:flex;gap:8px;padding:8px 18px 0;border-bottom:1px solid var(--line-soft);flex-shrink:0}
+  .src-tab{flex:1;text-align:center;padding:14px 2px 16px;font-size:16px;font-weight:600;color:var(--ink-3);position:relative}
+  .src-tab:hover{color:var(--ink-2)}
+  .src-tab.active{color:var(--ink)}
+  .src-tab.active::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--ink);border-radius:2px}
+
+  .scroll{flex:1;overflow:auto;padding:18px 22px 12px;min-height:0}
+  .rhead-row{display:flex;align-items:center;gap:10px;padding:18px 22px 0;flex-shrink:0}
+  .rhead{font-size:15px;font-weight:600;color:var(--ink-2)}
+  .acts{margin-left:auto;display:flex;align-items:center;gap:14px}
+  .act{display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--ink-2);font-weight:500}
+  .act:hover{color:var(--ink)}
+  .act svg{width:16px;height:16px}
+  .act.revise{color:#fff;border:1px solid var(--red);padding:6px 12px;border-radius:10px}
+  .act.revise svg{color:var(--red)}
+  .act.revise:hover{background:rgba(245,66,17,.14)}
+  .hide{display:none !important}
+
+  /* YouTube logo icon (proper) */
+  .yt-logo{width:25px;height:18px;border-radius:6px;background:var(--yt);display:grid;place-items:center;flex-shrink:0}
+  .yt-logo::after{content:"";border-left:8px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:1px}
+  .yt-logo.sm{width:22px;height:16px;border-radius:5px}
+  .yt-logo.sm::after{border-left-width:7px;border-top-width:4px;border-bottom-width:4px}
+  .recent .yt-logo{width:16px;height:12px;border-radius:3px}
+  .recent .yt-logo::after{border-left-width:5px;border-top-width:3px;border-bottom-width:3px}
+
+  /* Left: youtube empty */
+  .vempty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:13px;
+    padding:54px 24px;background:var(--card);border:1px solid var(--line-soft);border-radius:16px}
+  .vempty .ic{width:46px;height:46px;border-radius:14px;background:var(--red-soft);display:grid;place-items:center}
+  .vempty b{font-size:15px;color:var(--ink);font-weight:600}
+  .vempty p{font-size:13.5px;color:var(--ink-3);line-height:1.65}
+
+  /* Left: loaded video card */
+  .vcard{position:relative;background:var(--card);border:1px solid var(--line-soft);border-radius:16px;padding:16px}
+  .embed{position:relative;border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:#000}
+  .embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .v-title{font-size:16px;font-weight:600;line-height:1.45;margin:16px 0 8px;display:flex;gap:10px;align-items:flex-start}
+  .v-title #v-title-text{flex:1}
+  .v-title .tbtn{color:var(--ink-3);flex-shrink:0;margin-top:1px;display:flex}
+  .v-title .tbtn:hover{color:var(--ink)}
+  .v-title .vremove:hover{color:#fff}
+  .v-sub{font-size:13px;color:var(--ink-3)}
+  .v-views{font-size:13px;color:var(--ink-3);margin-top:2px}
+  .tl{margin-top:16px;display:flex;flex-direction:column;border-top:1px solid var(--line-soft);padding-top:8px}
+  .tl-row{display:flex;gap:18px;padding:9px 2px;font-size:14px}
+  .tl-row .t{color:var(--ink-3);font-variant-numeric:tabular-nums;flex-shrink:0;width:64px}
+  .tl-row .s{color:var(--ink-2)}
+
+  .recent{margin-top:16px;background:var(--card);border:1px solid var(--line-soft);border-radius:16px;padding:16px 18px}
+  .recent h3{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .recent h3 svg{width:17px;height:17px;color:var(--ink-2)}
+  .recent .r-item{display:flex;align-items:center;gap:12px;padding:9px 10px;margin:0 -10px;border-radius:10px;
+    font-size:14px;color:var(--ink-2);overflow:hidden;transition:background .15s ease,color .15s ease}
+  .recent .r-item:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+  html.light .recent .r-item:hover{background:rgba(0,0,0,.065)}
+  .recent .r-item span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* Right: youtube input */
+  .ask{display:flex;align-items:center;gap:9px;margin-bottom:12px;flex-wrap:wrap}
+  .ask .q{font-size:15px;font-weight:600;color:var(--ink)}
+  .badge-model{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ink-2);
+    background:var(--chip);padding:5px 11px;border-radius:999px}
+  .badge-model .d{width:7px;height:7px;border-radius:50%;background:var(--red)}
+  .url-row{display:flex;gap:10px;align-items:stretch;margin-bottom:28px}
+  .url-field{flex:1;display:flex;align-items:center;gap:10px;background:var(--field);border:1px solid var(--line);
+    border-radius:14px;padding:0 14px;min-height:54px}
+  .url-field:focus-within{border-color:#3d3d44}
+  .url-field svg{color:var(--ink-3);flex-shrink:0}
+  .url-field input{flex:1;background:none;border:none;outline:none;color:var(--ink);font-size:14.5px}
+  .url-field input::placeholder{color:var(--ink-3)}
+  .url-field .clear{color:var(--ink-3);display:flex}
+  .url-field .clear:hover{color:var(--ink)}
+  .btn-primary{background:var(--red);color:#fff;font-weight:700;font-size:14.5px;padding:0 24px;border-radius:14px;
+    white-space:nowrap;min-height:54px;display:flex;align-items:center;justify-content:center}
+  .btn-primary:hover{background:var(--red-press)}
+
+  .trend-title{font-size:17px;font-weight:700;margin-bottom:16px}
+  .trend-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px 16px}
+  .tcard{display:block;cursor:pointer}
+  .tcard .thumb{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#1a1a1d}
+  .tcard .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .tcard .thumb .flag{position:absolute;top:7px;left:7px;font-size:10px;font-weight:800;color:#fff;
+    background:var(--yt);padding:2px 6px;border-radius:5px;letter-spacing:.3px}
+  .tcard .thumb .ov{position:absolute;inset:0;display:grid;place-items:center;opacity:0;transition:.15s;background:rgba(0,0,0,.35)}
+  .tcard:hover .thumb .ov{opacity:1}
+  .tcard .thumb .ov .pl{width:42px;height:30px;background:var(--yt);border-radius:8px;display:grid;place-items:center}
+  .tcard .thumb .ov .pl::after{content:"";border-left:13px solid #fff;border-top:8px solid transparent;border-bottom:8px solid transparent;margin-left:2px}
+  .tcard .tt{font-size:13.5px;font-weight:600;color:var(--ink);margin:9px 0 4px;line-height:1.4;
+    display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+  .tcard:hover .tt{color:var(--red)}
+  .tcard .tc{font-size:12px;color:var(--ink-3)}
+  .tcard .tv{font-size:12px;color:var(--ink-3);margin-top:2px}
+
+  /* Right: youtube result */
+  .res-head{font-size:16px;font-weight:700;margin-bottom:14px}
+  .res-box{background:var(--field);border:1px solid var(--line);border-radius:14px;padding:18px 20px;min-height:110px;
+    font-size:14.5px;line-height:1.8;color:var(--ink-2)}
+  .res-box ul{list-style:none;display:flex;flex-direction:column;gap:10px}
+  .res-box li{display:flex;gap:9px}
+  .res-box li::before{content:"•";color:var(--ink-2);font-weight:700}
+  .res-box h3{font-size:18px;color:var(--ink);margin-bottom:10px}
+  .res-box p{margin-bottom:10px}
+  .pill-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 14px}
+  .pill{background:var(--chip);color:var(--ink-2);font-size:13.5px;font-weight:600;padding:9px 16px;border-radius:10px}
+  .pill:hover{color:var(--ink)}
+  .pill.active{background:#fff;color:#111}
+  .loading-line{display:flex;align-items:center;gap:9px;color:var(--ink-3);font-size:13.5px;margin-top:6px}
+  .loading-line svg{width:17px;height:17px}
+  .res-body .tl{border-top:none;padding-top:0}
+  /* timeline (attachment-2 feel) */
+  .tlx-wrap{display:flex;flex-direction:column;gap:9px;margin-top:4px}
+  .tlx{background:var(--field);border:1px solid var(--line-soft);border-radius:10px;padding:13px 14px}
+  .tlx:hover{border-color:#3a3a42}
+  .tlx-head{display:flex;align-items:flex-start;gap:12px;cursor:pointer}
+  .tlx .ttl{flex:1;font-weight:600;color:var(--ink);font-size:14px;line-height:1.5}
+  .tlx .tm{display:flex;align-items:center;gap:5px;color:var(--red);font-size:11.5px;font-weight:700;flex-shrink:0;
+    font-variant-numeric:tabular-nums;margin-top:2px}
+  .act.save.saved{color:#fff}
+  .act .spin{width:14px;height:14px;border-color:rgba(255,255,255,.25);border-top-color:currentColor}
+  .tlx .tm .pl{width:0;height:0;border-left:7px solid var(--red);border-top:5px solid transparent;border-bottom:5px solid transparent}
+  .tlx .chev{color:var(--ink-3);display:flex;flex-shrink:0;margin-top:1px}
+  .tlx .chev svg{transition:transform .2s}
+  .tlx.open .chev svg{transform:rotate(180deg)}
+  .tlx-detail{display:none;font-size:13.5px;color:var(--ink-2);line-height:1.65;margin-top:11px;padding-top:11px;border-top:1px solid var(--line-soft)}
+  .tlx.open .tlx-detail{display:block}
+  .sk{background:linear-gradient(90deg,#202020 25%,#2a2a2a 37%,#202020 63%);background-size:400% 100%;
+    animation:sh 1.4s ease infinite;border-radius:8px}
+  @keyframes sh{0%{background-position:100% 0}100%{background-position:-100% 0}}
+
+  /* Doc/Web/Text inputs */
+  .lc{flex:1;display:flex;flex-direction:column;min-height:0}
+  .lc .lbl{font-size:15px;font-weight:600;margin-bottom:4px}
+  .lc .sub{font-size:13px;color:var(--ink-3);margin-bottom:16px}
+  .upload-row{display:block}
+  .upload-field{background:var(--field);border:none;border-radius:14px;cursor:pointer;transition:background-color .15s ease;
+    background-image:url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='14' ry='14' stroke='%232D2D2D' stroke-width='2' stroke-dasharray='3%2c4' stroke-linecap='butt'/%3e%3c/svg%3e")}
+  .upload-field:hover{background-color:#242424}
+  .upload-field.has{background-image:none;border:1.5px solid var(--line);cursor:default}
+  html.light .upload-field{background-image:url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='14' ry='14' stroke='%23E7E3DC' stroke-width='2' stroke-dasharray='3%2c4' stroke-linecap='butt'/%3e%3c/svg%3e")}
+  html.light .upload-field:hover{background-color:#F4F1EC}
+  html.light .upload-field.has{background-image:none}
+  .dz-prompt{display:flex;flex-direction:column;align-items:center;gap:5px;padding:26px 16px;text-align:center;color:var(--ink-3);font-size:13.5px}
+  .dz-prompt svg{width:26px;height:26px;color:var(--ink-3);margin-bottom:3px}
+  .dz-prompt b{color:var(--ink-2)}
+  .dz-hint{font-size:12px;color:var(--ink-3)}
+  .dz-file{display:flex;align-items:center;gap:10px;padding:0 12px 0 16px;min-height:54px;font-size:14px;color:var(--ink)}
+  .dz-file>svg{flex-shrink:0;color:var(--ink-3)}
+  .dz-file #doc-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dz-file .rm{width:22px;height:22px;border-radius:50%;background:var(--chip);color:var(--ink-2);border:1px solid var(--line);display:grid;place-items:center;flex-shrink:0}
+  .dz-file .rm:hover{color:var(--ink);border-color:var(--ink-3)}
+  .web-field{display:flex;align-items:center;gap:10px;background:var(--field);border:1px solid var(--line);border-radius:13px;
+    padding:0 14px;min-height:52px}
+  .web-field svg{color:var(--ink-3)}
+  .web-field input{flex:1;background:none;border:none;outline:none;color:var(--ink);font-size:14.5px}
+  .web-field input::placeholder{color:var(--ink-3)}
+  .text-area{flex:1;background:var(--field);border:1px solid var(--line);border-radius:13px;padding:16px;color:var(--ink);
+    font-size:14.5px;resize:none;outline:none;min-height:140px}
+  .text-area::placeholder{color:var(--ink-3)}
+  .btn-bottom{margin-top:16px;width:100%;min-height:54px;border-radius:14px;background:var(--chip);color:var(--ink-3);
+    font-weight:700;font-size:15px;flex-shrink:0}
+  .btn-bottom.on{background:var(--red);color:#fff}
+  .btn-bottom.on:hover{background:var(--red-press)}
+
+  /* taste preview */
+  .taste{margin-top:16px;background:var(--card);border:1px solid var(--line-soft);border-radius:14px;padding:18px}
+  .taste h4{font-size:14px;font-weight:600;margin-bottom:10px}
+  .taste p{font-size:13.5px;color:var(--ink-2);line-height:1.7}
+
+  /* document page render (neutral report) */
+  .doc-page{margin-top:16px;background:var(--card);border:1px solid var(--line-soft);border-radius:14px;padding:16px;
+    display:flex;justify-content:center}
+  .rpt{background:#fff;color:#23262c;width:100%;max-width:540px;padding:30px 32px;border-radius:5px;font-size:11px;line-height:1.6}
+  .rpt .kicker{color:#2B6FE3;font-weight:800;letter-spacing:1.5px;font-size:9.5px}
+  .rpt h1{font-size:23px;font-weight:800;line-height:1.2;margin:6px 0 4px;color:#16181d}
+  .rpt .by{color:#7a7f88;font-size:10px;border-bottom:1px solid #e9e9ec;padding-bottom:14px;margin-bottom:14px}
+  .rpt h2{font-size:12.5px;font-weight:800;color:#16181d;margin:16px 0 6px;text-transform:uppercase;letter-spacing:.4px}
+  .rpt p{color:#41454d;margin-bottom:8px}
+  .rpt ul{padding-left:16px;color:#41454d}
+  .rpt ul li{margin-bottom:4px}
+  .rpt .stats{display:flex;gap:10px;margin:12px 0}
+  .rpt .stat{flex:1;background:#F3F6FC;border-radius:8px;padding:10px 12px}
+  .rpt .stat b{display:block;font-size:19px;color:#2B6FE3;line-height:1.1}
+  .rpt .stat span{font-size:9px;color:#6b7079}
+
+  /* website page render (neutral article) */
+  .web-page{margin-top:16px;background:var(--card);border:1px solid var(--line-soft);border-radius:14px;padding:14px;
+    display:flex;justify-content:center}
+  .wp{background:#fff;color:#222;width:100%;border-radius:6px;overflow:hidden;font-size:11px}
+  .wp-nav{display:flex;align-items:center;gap:16px;padding:12px 16px;border-bottom:1px solid #eee;font-size:10px;color:#666}
+  .wp-nav b{color:#111;font-weight:800;font-size:13px;margin-right:auto}
+  .wp-art{padding:18px 22px 22px}
+  .wp-art .cat{color:#E0532B;font-weight:800;font-size:9.5px;letter-spacing:1px}
+  .wp-art h3{font-size:18px;color:#111;font-weight:800;line-height:1.25;margin:6px 0 6px}
+  .wp-art .meta{color:#888;font-size:9.5px;margin-bottom:12px}
+  .wp-art .hero{height:110px;border-radius:8px;background:#e8e8ec;margin-bottom:12px;overflow:hidden}
+  .wp-art .hero img{width:100%;height:100%;object-fit:cover;display:block}
+  .wp-art p{color:#555;line-height:1.75;margin-bottom:8px}
+
+  /* structured summary */
+  .sum{font-size:14.5px;color:var(--ink-2);line-height:1.85}
+  .sum h3{font-size:17px;color:var(--ink);font-weight:700;margin:24px 0 10px}
+  .sum h3:first-child{margin-top:2px}
+  .sum ul,.sum ol{padding-left:22px;display:flex;flex-direction:column;gap:7px;margin:6px 0}
+  .sum ul ul,.sum ol ul{margin:7px 0 0}
+  .sum li{padding-left:3px}
+  .sum b{color:var(--ink);font-weight:600}
+  .sum a{color:var(--gold)}
+  .sum p{margin:10px 0}
+
+  /* est-time loading */
+  .est{display:flex;align-items:center;justify-content:center;gap:7px;color:var(--ink-3);font-size:13px;margin:6px 0 22px}
+  .est svg{width:15px;height:15px}
+  .skbars{display:flex;flex-direction:column;gap:15px}
+  .skbar{height:14px;border-radius:7px}
+
+  /* empty (right doc/web/text) — centered */
+  .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;padding:20px}
+  .empty svg{width:92px;height:92px}
+  .empty p{font-size:15px;color:var(--ink-2);line-height:1.6}
+
+  .chat-fab{position:fixed;right:24px;bottom:22px;display:flex;align-items:center;gap:9px;background:var(--field);
+    border:1px solid var(--line);border-radius:999px;padding:8px 16px 8px 9px;font-size:14px;font-weight:600;
+    box-shadow:0 8px 24px rgba(0,0,0,.45);z-index:40}
+  .chat-fab:hover{background:var(--chip)}
+  .chat-fab .av{width:30px;height:30px;border-radius:50%;object-fit:cover;object-position:center 18%;background:#2a2a30;display:block}
+
+  /* Revise chat panel */
+  .chat-back{position:fixed;inset:0;background:rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:.2s;z-index:65}
+  .chat-back.open{opacity:1;pointer-events:auto}
+  .chat-panel{position:fixed;top:0;right:0;width:400px;max-width:92vw;height:100vh;background:#161616;border-left:1px solid var(--line);
+    display:flex;flex-direction:column;transform:translateX(100%);transition:transform .26s ease;z-index:66}
+  .chat-panel.open{transform:none}
+  .chat-head{display:flex;align-items:center;gap:12px;padding:18px 18px 12px}
+  .chat-head .mid{flex:1;text-align:center;font-weight:600;font-size:15px}
+  .chat-head button{color:var(--ink-2);display:flex}
+  .chat-head button:hover{color:var(--ink)}
+  .chat-body{flex:1;overflow:auto;padding:6px 18px 18px}
+  .chat-date{display:flex;align-items:center;gap:12px;color:var(--ink-3);font-size:12.5px;margin:8px 0 22px}
+  .chat-date::before,.chat-date::after{content:"";flex:1;height:1px;background:var(--line-soft)}
+  .chat-msg{display:flex;flex-direction:column;gap:8px}
+  .chat-msg .who{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600}
+  .chat-msg .who .av{width:30px;height:30px;border-radius:50%;object-fit:cover;object-position:center 18%;background:#2a2a30;display:block}
+  .chat-msg .bubble{font-size:14.5px;color:var(--ink);line-height:1.7}
+  .chat-msg .tools{display:flex;align-items:center;gap:16px;color:var(--ink-3);margin-top:4px;font-size:12px}
+  .chat-msg .tools svg{width:16px;height:16px}
+  .chat-input{border-top:1px solid var(--line-soft);padding:14px 16px 16px}
+  .ctx-chip{display:flex;align-items:center;gap:10px;background:var(--field);border:1px solid var(--line);border-radius:12px;
+    padding:9px 10px;margin-bottom:10px}
+  .ctx-chip .ico{width:34px;height:34px;border-radius:9px;background:#2a2026;display:grid;place-items:center;flex-shrink:0}
+  .ctx-chip .ico svg{width:18px;height:18px;color:var(--red)}
+  .ctx-chip .meta{flex:1;min-width:0}
+  .ctx-chip .meta b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ctx-chip .meta span{font-size:11.5px;color:var(--ink-3)}
+  .ctx-chip .x{width:22px;height:22px;border-radius:50%;background:#fff;color:#111;display:grid;place-items:center;flex-shrink:0}
+  .chat-field{display:flex;align-items:center;gap:10px}
+  .chat-field input{flex:1;background:none;border:none;outline:none;color:var(--ink);font-size:14.5px;padding:8px 2px}
+  .chat-field input::placeholder{color:var(--ink-3)}
+  .chat-field .plus{width:30px;height:30px;border-radius:50%;background:var(--chip);display:grid;place-items:center;color:var(--ink-2)}
+  .chat-field .send{width:34px;height:34px;border-radius:50%;background:var(--red);display:grid;place-items:center;color:#fff;flex-shrink:0}
+
+  .toast{position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);background:#fff;color:#111;
+    font-size:13.5px;font-weight:600;padding:11px 18px;border-radius:11px;opacity:0;pointer-events:none;transition:.25s;z-index:80}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* --- polish: entrance animation --- */
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .res-box ul{animation:fadeUp .35s ease}
+  .tlx-wrap{animation:fadeUp .3s ease}
+  .sum{animation:fadeUp .35s ease}
+  .vcard{animation:fadeUp .35s ease}
+  .doc-page,.web-page,.taste{animation:fadeUp .3s ease}
+
+  /* --- polish: loading spinner --- */
+  .spin{width:15px;height:15px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;
+    display:inline-block;animation:rot .7s linear infinite;vertical-align:middle}
+  @keyframes rot{to{transform:rotate(360deg)}}
+  .btn-primary.loading,.btn-bottom.loading{gap:9px;opacity:.92}
+
+  /* --- polish: subtle transitions & hover --- */
+  .btn-primary,.btn-bottom,.btn-add,.pill,.act,.src-tab,.rail-item,.tcard,.url-field,.upload-field,.web-field{
+    transition:background .15s ease,color .15s ease,border-color .15s ease,transform .14s ease,box-shadow .16s ease}
+  .btn-primary:active,.btn-bottom.on:active{transform:translateY(1px)}
+  .tcard{will-change:transform}
+  .tcard:hover{transform:translateY(-3px)}
+  .tcard:hover .thumb{box-shadow:0 10px 22px rgba(0,0,0,.45)}
+
+  /* --- clickable timeline timestamp --- */
+  .tlx .tm{cursor:pointer;border:none;background:none;font-family:inherit}
+  .tlx .tm:hover{opacity:.65}
+
+  /* --- output formats: tweet thread --- */
+  .tweets{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+  .tweet{background:var(--field);border:1px solid var(--line);border-radius:12px;padding:13px 15px;font-size:14px;line-height:1.6;color:var(--ink-2)}
+  .tweet:first-child{font-weight:600;color:var(--ink)}
+  /* --- output formats: flashcards --- */
+  .cards{display:flex;flex-direction:column;gap:12px;margin-top:4px}
+  .card{background:var(--field);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .card .q{font-weight:600;color:var(--ink);font-size:14px;margin-bottom:7px}
+  .card .a{font-size:13.5px;color:var(--ink-2);line-height:1.6}
+
+  /* --- chat: user bubble --- */
+  .chat-msg{margin-bottom:18px}
+  .chat-msg.me{align-items:flex-end}
+  .chat-msg.me .bubble{background:var(--red);color:#fff;padding:9px 13px;border-radius:14px 14px 4px 14px;max-width:82%;font-size:14.5px;line-height:1.6}
+
+  /* --- Library view --- */
+  .library{flex:1;min-height:0;overflow:auto;padding:10px 26px 32px}
+  .lib-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+  .lib-head h2{font-size:24px;font-weight:800;letter-spacing:-.5px}
+  .lib-stat{font-size:13px;color:var(--ink-2);background:var(--panel);border:1px solid var(--line-soft);padding:9px 14px;border-radius:12px}
+  .lib-stat b{color:var(--red)}
+  .lib-search{display:flex;align-items:center;gap:10px;background:var(--field);border:1px solid var(--line);border-radius:13px;padding:0 14px;min-height:48px;margin-bottom:14px}
+  .lib-search svg{color:var(--ink-3);flex-shrink:0}
+  .lib-search input{flex:1;background:none;border:none;outline:none;color:var(--ink);font-size:14.5px}
+  .lib-search input::placeholder{color:var(--ink-3)}
+  .lib-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .lf{font-size:13px;font-weight:600;color:var(--ink-2);background:var(--chip);border:1px solid transparent;padding:7px 14px;border-radius:999px;transition:.15s}
+  .lf:hover{color:var(--ink)}
+  .lf.active{background:var(--red);color:#fff}
+  .lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:16px}
+  .lcard{background:var(--panel);border:1px solid var(--line-soft);border-radius:16px;overflow:hidden;cursor:pointer;transition:transform .14s ease,border-color .15s}
+  .lcard:hover{transform:translateY(-3px);border-color:#3a3a42}
+  .lcard .lthumb{aspect-ratio:16/9;background:#1a1a1d;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .lcard .lthumb img{width:100%;height:100%;object-fit:cover}
+  .lcard .lthumb .badge{position:absolute;top:8px;left:8px;font-size:10.5px;font-weight:700;color:#fff;background:rgba(0,0,0,.6);padding:3px 8px;border-radius:6px}
+  .lcard .licon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center}
+  .lcard .lbody{padding:13px 15px}
+  .lcard .lt{font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.35;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .lcard .lsrc{font-size:12px;color:var(--ink-3);margin-bottom:8px}
+  .lcard .lsnip{font-size:12.5px;color:var(--ink-2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+  /* ===== Light mode ===== */
+  html.light{
+    --bg:#FFFFFF; --topbar:#FFFFFF; --panel:#FFFFFF; --card:#FBFAF8; --field:#FBFAF8;
+    --chip:#F5F3EF; --line:#EFEDE8; --line-soft:#F6F4F0;
+    --ink:#1B1A17; --ink-2:#5E5B55; --ink-3:#9B978E; --red-soft:#FCEDE8;
+  }
+  html.light body{background:var(--bg)}
+  html.light .panel{box-shadow:0 1px 3px rgba(0,0,0,.04),0 14px 34px rgba(0,0,0,.05)}
+  html.light .lcard{box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  html.light .rail{background:var(--card);border-right:none}
+  html.light .rail-item{color:#111}
+  html.light .rail-item.active .ic-box{background:#ECE9E2}
+  html.light .chat-panel{background:#FFFFFF;border-left:1px solid var(--line)}
+  html.light ::-webkit-scrollbar-thumb{background:#D3D3D9}
+  html.light .sk{background:linear-gradient(90deg,#ECECEF 25%,#E1E1E6 37%,#ECECEF 63%)}
+  html.light .pill.active{background:#1A1A1C;color:#fff}
+  html.light .act.revise{color:var(--ink)}
+  html.light .act.revise svg{color:var(--red)}
+  html.light .act.save.saved{color:var(--ink)}
+  html.light .topbar .profile{background:rgba(0,0,0,.06)}
+  html.light .topbar .profile:hover{background:rgba(0,0,0,.10)}
+  html.light .v-title .vremove:hover{color:#111}
+  html.light .ctx-chip .ico{background:#F3E7E3}
+  html.light .tcard:hover .thumb{box-shadow:0 10px 22px rgba(0,0,0,.14)}
+
+  /* ===== Polish pass (top-B2C feel) ===== */
+  /* primary CTA — flat, no drop shadow */
+  .btn-primary,.btn-bottom.on{box-shadow:none}
+  /* focus — neutral (white in dark, dark-gray in light) */
+  .url-field:focus-within,.web-field:focus-within,.upload-field:focus-within,.lib-search:focus-within,.text-area:focus{
+    border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.10)}
+  html.light .url-field:focus-within,html.light .web-field:focus-within,html.light .upload-field:focus-within,html.light .lib-search:focus-within,html.light .text-area:focus{
+    border-color:#5A5A5A;box-shadow:0 0 0 3px rgba(0,0,0,.05)}
+  /* trending thumbnail zoom-on-hover */
+  .tcard .thumb img{transition:transform .35s cubic-bezier(.2,.7,.2,1)}
+  .tcard:hover .thumb img{transform:scale(1.05)}
+  /* tighter heading tracking */
+  .topbar h1,.trend-title,.lib-head h2,.hero h1,.res-head{letter-spacing:-.022em}
+  /* clear (x) button tactility */
+  .url-field .clear{transition:opacity .15s,transform .15s}
+  .url-field .clear:hover{transform:scale(1.08)}
+  /* gentler, layered card shadows */
+  html.light .panel{box-shadow:0 1px 2px rgba(20,18,15,.04),0 10px 30px rgba(20,18,15,.06)}
+  html.light .lcard{box-shadow:0 1px 2px rgba(20,18,15,.05)}
+  html.light .lcard:hover{box-shadow:0 8px 22px rgba(20,18,15,.10)}
+  html.light .chat-fab{box-shadow:0 4px 14px rgba(20,18,15,.12)}
+  /* Add-file button — clean white in light, subtle hover */
+  html.light .btn-add{background:#fff}
+  html.light .btn-add:hover{background:#FFF4F0;border-color:var(--red);color:var(--red)}
+  /* Revise hover — fill red, icon + text white (both modes) */
+  .act.revise:hover{background:var(--red);border-color:var(--red);color:#fff}
+  .act.revise:hover svg{color:#fff}
+  html.light .act.revise:hover{color:#fff}
+  html.light .act.revise:hover svg{color:#fff}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Rail -->
+  <nav class="rail">
+    <div class="logo"><svg width="36" height="20" viewBox="8.5 9 40 22.4" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.2668 19.9785H21.7614V17.0827H12.7346V16.0381H21.7614V9.20117H9.37102V12.0969H18.3333V13.1416H9.37102V17.082C9.37102 18.6812 10.6676 19.9777 12.2668 19.9777V19.9785ZM47.3425 9.20117H30.1637V12.0969H47.3425V9.20117ZM33.0595 19.7035H47.3425V16.8077H33.5926V15.8998H47.3425V13.004H30.1637V16.8077V16.9936H30.1706C30.2666 18.506 31.5233 19.7035 33.0595 19.7035ZM29.0062 20.7965H48.5V23.6923H29.0062V20.7965ZM23.6778 9.20117H27.1058V30.7635H23.6778V9.20117ZM33.5925 24.8107H30.1645V27.3354C30.1645 29.2288 31.6992 30.7635 33.5925 30.7635H47.3425V27.8677H33.5925V24.8107ZM17.6197 21.3486C17.6402 21.3479 17.6607 21.3473 17.6812 21.3473V21.3496H22.6332V24.4228H17.1804C16.3762 24.4228 15.7225 25.1517 15.7225 25.9551V30.7988H12.5717V25.9551C12.5717 25.4182 12.8298 24.7461 13.3068 24.4228H8.5V21.3496H17.589C17.5993 21.3493 17.6095 21.349 17.6197 21.3486Z" fill="#F54211"/></svg></div>
+    <button class="rail-item" data-nav="chat"><div class="ic-box"><svg viewBox="19 63.5 18 18" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M26.3307 66.1667H29.6641C32.4255 66.1667 34.6641 68.4052 34.6641 71.1667C34.6641 73.9281 32.4255 76.1667 29.6641 76.1667H25.2575L22.6301 77.7437C22.8926 76.7274 23.0765 76.0006 23.1836 75.5776C23.2571 75.2869 23.2944 75.1397 23.2959 75.1406C22.1013 74.2269 21.3307 72.7868 21.3307 71.1667C21.3307 68.4052 23.5693 66.1667 26.3307 66.1667ZM21.4283 75.6845C20.333 74.4966 19.6641 72.9098 19.6641 71.1667C19.6641 67.4848 22.6488 64.5 26.3307 64.5H29.6641C33.346 64.5 36.3307 67.4848 36.3307 71.1667C36.3307 74.8486 33.346 77.8333 29.6641 77.8333H25.7537L21.7605 80.2125C21.4714 80.3865 21.106 80.369 20.8348 80.1682C20.5637 79.9675 20.4403 79.623 20.5224 79.2958L21.4283 75.6845ZM24.6641 72C25.1243 72 25.4974 71.6269 25.4974 71.1667C25.4974 70.7064 25.1243 70.3333 24.6641 70.3333C24.2038 70.3333 23.8307 70.7064 23.8307 71.1667C23.8307 71.6269 24.2038 72 24.6641 72ZM27.9974 72C28.4576 72 28.8307 71.6269 28.8307 71.1667C28.8307 70.7064 28.4576 70.3333 27.9974 70.3333C27.5372 70.3333 27.1641 70.7064 27.1641 71.1667C27.1641 71.6269 27.5372 72 27.9974 72ZM32.1641 71.1667C32.1641 71.6269 31.791 72 31.3307 72C30.8705 72 30.4974 71.6269 30.4974 71.1667C30.4974 70.7064 30.8705 70.3333 31.3307 70.3333C31.791 70.3333 32.1641 70.7064 32.1641 71.1667Z" fill="currentColor"/></svg></div>Chat</button>
+    <button class="rail-item active" data-nav="tools"><div class="ic-box"><svg viewBox="18.5 133 18 18" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M23.8366 136.161L23.1588 133.788C23.1124 133.626 22.8824 133.626 22.836 133.788L22.1582 136.161L19.7858 136.839C19.6235 136.885 19.6235 137.115 19.7858 137.161L22.1582 137.839L22.836 140.212C22.8824 140.374 23.1124 140.374 23.1588 140.212L23.8366 137.839L26.209 137.161C26.3713 137.115 26.3713 136.885 26.209 136.839L23.8366 136.161ZM28.6372 140.598L22.1554 147.08C21.83 147.406 21.83 147.933 22.1554 148.259C22.4809 148.584 23.0085 148.584 23.3339 148.259L29.8157 141.777L28.6372 140.598ZM20.9769 145.902L31.5835 135.295L35.1191 138.831L24.5124 149.437C23.5361 150.414 21.9532 150.414 20.9769 149.437C20.0006 148.461 20.0006 146.878 20.9769 145.902ZM33.5149 144.576L33.9386 146.059L35.4213 146.483C35.5228 146.512 35.5228 146.655 35.4213 146.684L33.9386 147.108L33.5149 148.591C33.4859 148.692 33.3422 148.692 33.3132 148.591L32.8896 147.108L31.4068 146.684C31.3054 146.655 31.3054 146.512 31.4068 146.483L32.8896 146.059L33.3132 144.576C33.3422 144.475 33.4859 144.475 33.5149 144.576Z" fill="currentColor"/></svg></div>Tools</button>
+    <button class="rail-item" data-nav="deals"><div class="ic-box"><svg viewBox="19 202.9 18 18" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M30.3638 204.447C31.6111 203.886 33.058 203.933 34.0033 204.878C34.7758 205.651 34.8097 206.587 34.5875 207.331C34.579 207.359 34.5702 207.388 34.5609 207.416H34.6641C35.5845 207.416 36.3307 208.162 36.3307 209.082V210.749C36.3307 211.669 35.5845 212.416 34.6641 212.416V218.249C34.6641 219.169 33.9179 219.916 32.9974 219.916H22.9974C22.0769 219.916 21.3307 219.169 21.3307 218.249L21.3307 212.416C20.4103 212.416 19.6641 211.669 19.6641 210.749V209.082C19.6641 208.162 20.4103 207.416 21.3307 207.416H21.4778C21.4686 207.388 21.4597 207.359 21.4512 207.331C21.2291 206.587 21.263 205.651 22.0354 204.878C22.9807 203.933 24.4277 203.886 25.675 204.447C26.54 204.836 27.3635 205.528 28.0194 206.511C28.6752 205.528 29.4987 204.836 30.3638 204.447ZM26.6197 207.416C26.124 206.681 25.5372 206.213 24.991 205.967C24.155 205.591 23.5186 205.752 23.2139 206.057C22.9864 206.284 22.9508 206.528 23.0481 206.854C23.1065 207.049 23.2085 207.244 23.3231 207.416H26.6197ZM32.9906 206.854C32.9323 207.049 32.8303 207.244 32.7156 207.416H29.419C29.9147 206.681 30.5016 206.213 31.0477 205.967C31.8837 205.591 32.5201 205.752 32.8248 206.057C33.0524 206.284 33.0879 206.528 32.9906 206.854ZM27.1641 209.082H21.3307V210.749L27.1641 210.749V209.082ZM28.8307 209.082V210.749L34.6641 210.749V209.082H28.8307ZM27.1641 212.416H22.9974V218.249H27.1641L27.1641 212.416ZM28.8307 218.249L28.8307 212.416H32.9974V218.249H28.8307Z" fill="currentColor"/></svg></div>Deals</button>
+    <button class="rail-item" data-nav="saved"><div class="ic-box"><svg viewBox="19.5 273.3 18 18" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M24.3307 276.182V287.662L26.8704 285.466C27.8066 284.656 29.1881 284.656 30.1244 285.466L32.6641 287.662V276.182H24.3307ZM23.0807 274.5C22.8506 274.5 22.6641 274.688 22.6641 274.92V289.491C22.6641 290.209 23.4992 290.597 24.0397 290.129L27.9551 286.743C28.2671 286.473 28.7276 286.473 29.0397 286.743L32.9551 290.129C33.4956 290.597 34.3307 290.209 34.3307 289.491V274.92C34.3307 274.688 34.1442 274.5 33.9141 274.5H23.0807Z" fill="currentColor"/></svg></div>Saved</button>
+  </nav>
+
+  <div class="main">
+    <header class="topbar">
+      <h1>AI Summarizer</h1>
+      <div class="right">
+        <button class="ico" id="theme-toggle" title="Toggle light / dark"></button>
+        <button class="ico"><svg width="22" height="22" viewBox="4 4 24 24" fill="none"><path d="M19 23C19 23.394 18.9222 23.7845 18.7715 24.1484C18.6207 24.5123 18.3996 24.8426 18.1211 25.1211C17.8426 25.3996 17.5123 25.6207 17.1484 25.7715C16.7845 25.9222 16.394 26 16 26C15.606 26 15.2155 25.9222 14.8516 25.7715C14.4877 25.6207 14.1574 25.3996 13.8789 25.1211C13.6004 24.8426 13.3793 24.5123 13.2285 24.1484C13.0778 23.7845 13 23.394 13 23H7V21H9V15C9 11.649 11.355 8.84991 14.5 8.16309V7.5C14.5 7.08333 14.6458 6.72917 14.9375 6.4375C15.2292 6.14583 15.5833 6 16 6C16.4167 6 16.7708 6.14583 17.0625 6.4375C17.3542 6.72917 17.5 7.08333 17.5 7.5V8.16309C20.645 8.84991 23 11.649 23 15V21H25V23H19ZM16 10C13.2386 10 11 12.2386 11 15V21H21V15C21 12.2386 18.7614 10 16 10Z" fill="currentColor"/></svg></button>
+        <button class="ico profile"><svg width="22" height="22" viewBox="40 0 32 32" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M55.9967 15.8018C57.903 15.8018 59.4483 14.2565 59.4483 12.3503C59.4483 10.444 57.903 8.89868 55.9967 8.89868C54.0905 8.89868 52.5451 10.444 52.5451 12.3503C52.5451 14.2565 54.0905 15.8018 55.9967 15.8018ZM48.6953 22.2054H63.2981C63.2981 18.6704 60.0292 16.8952 55.9967 16.8952C51.9643 16.8952 48.6953 18.6704 48.6953 22.2054H48.6953Z" fill="currentColor"/></svg></button>
+      </div>
+    </header>
+
+    <div class="panels">
+      <!-- LEFT -->
+      <section class="panel left">
+        <div class="src-tabs">
+          <button class="src-tab active" data-src="youtube">YouTube</button>
+          <button class="src-tab" data-src="doc">Document</button>
+          <button class="src-tab" data-src="web">Website</button>
+          <button class="src-tab" data-src="text">Text</button>
+        </div>
+
+        <!-- left: youtube -->
+        <div class="scroll" id="left-youtube">
+          <div id="video-empty" class="vempty">
+            <div class="ic"><span class="yt-logo sm"></span></div>
+            <b>No video selected yet</b>
+            <p>Pick a video on the right or paste a link,<br>then hit Summarize to see it here.</p>
+          </div>
+          <div id="video-loaded" class="vcard hide">
+            <div class="embed"><iframe id="yt-frame" src="" title="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
+            <div class="v-title">
+              <span id="v-title-text"></span>
+              <button class="tbtn copy" title="Copy"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>
+              <button class="tbtn vremove" id="vremove" title="Remove video"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+            </div>
+            <div class="v-sub" id="v-meta"></div>
+            <div class="v-views" id="v-views"></div>
+            <div class="tl" id="v-transcript"></div>
+          </div>
+          <div class="recent">
+            <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Recent Summaries</h3>
+            <div id="recent-list"></div>
+          </div>
+        </div>
+
+        <!-- left: doc -->
+        <div class="scroll lc hide" id="left-doc">
+          <div class="lbl">Upload the document you'd like to summarize</div>
+          <div class="sub">Upload one .pdf or .docx file (under 100MB)</div>
+          <div class="upload-row">
+            <div class="upload-field" id="doc-field">
+              <div class="dz-prompt" id="doc-prompt">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M8 8l4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+                <div><b>Click to upload</b> or drag and drop</div>
+                <span class="dz-hint">PDF or DOCX · up to 100MB</span>
+              </div>
+              <div class="dz-file hide" id="doc-fileview">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3v5h5M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+                <span id="doc-name">2026_Market_Report.pdf</span>
+                <button class="rm" id="doc-rm" title="Remove"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+              </div>
+            </div>
+          </div>
+          <div class="taste hide" id="doc-taste">
+            <h4>Preview</h4>
+            <p>The State of Remote Work 2026 is Horizon Research Institute's annual report on how distributed teams operate. Drawing on a survey of 2,400 companies across 18 countries, it finds hybrid schedules have become the default, productivity has largely held steady, and collaboration remains the top challenge teams are investing to solve.</p>
+          </div>
+          <div class="doc-page hide" id="doc-page">
+            <div class="rpt">
+              <div class="kicker">HORIZON RESEARCH INSTITUTE</div>
+              <h1>The State of Remote Work 2026</h1>
+              <div class="by">Annual Industry Report · Published Jun 2026 · 28 pages</div>
+              <h2>Executive Summary</h2>
+              <p>Remote and hybrid work have settled into a durable equilibrium. After years of rapid change, most organizations have converged on flexible models that balance focus time with in-person collaboration.</p>
+              <div class="stats">
+                <div class="stat"><b>64%</b><span>run hybrid schedules</span></div>
+                <div class="stat"><b>58%</b><span>stable / higher output</span></div>
+                <div class="stat"><b>41%</b><span>cite collaboration gaps</span></div>
+              </div>
+              <h2>Key Findings</h2>
+              <ul>
+                <li>Hybrid is now the default operating model for most teams.</li>
+                <li>Productivity held steady or improved for a majority of respondents.</li>
+                <li>Collaboration and onboarding are the most-cited friction points.</li>
+              </ul>
+              <h2>Methodology</h2>
+              <p>Findings are based on a survey of 2,400 companies across 18 countries, combined with structured interviews with people leaders.</p>
+              <h2>Outlook</h2>
+              <p>Spending on asynchronous collaboration tools is projected to grow 30% year over year, and hybrid is expected to remain dominant through 2027.</p>
+            </div>
+          </div>
+          <div style="flex:1;min-height:14px"></div>
+          <button class="btn-bottom" id="doc-go">Summarize</button>
+        </div>
+
+        <!-- left: web -->
+        <div class="scroll lc hide" id="left-web">
+          <div class="lbl">Enter the website link you'd like to summarize</div>
+          <div class="web-field" style="margin-top:6px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+            <input id="web-input" type="text" placeholder="https://" />
+          </div>
+          <div class="web-page hide" id="web-page">
+            <div class="wp">
+              <div class="wp-nav"><b>TechDaily</b> News Reviews Guides <span style="margin-left:auto">Subscribe</span></div>
+              <div class="wp-art">
+                <div class="cat">ARTIFICIAL INTELLIGENCE</div>
+                <h3>How AI Agents Are Reshaping Software in 2026</h3>
+                <div class="meta">By Jordan Lee · Jun 18, 2026 · 6 min read</div>
+                <div class="hero"><img src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=680&q=70" alt=""></div>
+                <p>Autonomous agents moved from flashy demos to dependable production workflows this year, quietly changing how software gets built and shipped.</p>
+                <p>The shift wasn't a single breakthrough so much as a stack of small ones: better orchestration frameworks, standardized evaluations, and clearer guardrails that teams actually trust.</p>
+                <p>But reliability and oversight remain open problems, and the teams seeing the biggest gains are the ones pairing agents with strong human review.</p>
+              </div>
+            </div>
+          </div>
+          <div style="flex:1;min-height:14px"></div>
+          <button class="btn-bottom" id="web-go">Summarize</button>
+        </div>
+
+        <!-- left: text -->
+        <div class="scroll lc hide" id="left-text">
+          <div class="lbl">Enter the text you'd like to summarize</div>
+          <textarea class="text-area" id="text-input" style="margin-top:6px" placeholder="Enter the text you'd like to summarize"></textarea>
+          <button class="btn-bottom" id="text-go">Summarize</button>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- RIGHT -->
+      <section class="panel right">
+        <!-- right: youtube -->
+        <div id="right-youtube" style="display:flex;flex-direction:column;min-height:0;flex:1">
+          <div class="rhead-row"><span class="rhead">Summary</span></div>
+          <div class="scroll" id="right-scroll">
+            <div class="ask">
+              <span class="q">Paste the YouTube link you'd like to summarize</span>
+              <span class="badge-model"><span class="d"></span> Advanced model in use</span>
+            </div>
+            <div class="url-row">
+              <div class="url-field">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+                <input id="yt-url" type="text" placeholder="Enter a YouTube link" />
+                <button class="clear" id="yt-clear"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" opacity=".25"/><path stroke="#111" stroke-width="2" d="M9 9l6 6M15 9l-6 6"/></svg></button>
+              </div>
+              <button class="btn-primary" id="yt-go">Summarize</button>
+            </div>
+            <div id="yt-trending">
+              <div class="trend-title">These videos are being summarized a lot right now!</div>
+              <div class="trend-grid" id="trend-grid"></div>
+            </div>
+            <div id="yt-result" class="hide">
+              <div class="res-box" id="res-box"></div>
+              <div class="pill-tabs">
+                <button class="pill active" data-rtab="timeline">Timeline</button>
+                <button class="pill" data-rtab="key">Key Points</button>
+                <button class="pill" data-rtab="blog">Blog</button>
+                <button class="pill" data-rtab="tldr">TL;DR</button>
+                <button class="pill" data-rtab="tweet">Tweet</button>
+                <button class="pill" data-rtab="email">Email</button>
+                <button class="pill" data-rtab="cards">Flashcards</button>
+              </div>
+              <div class="loading-line" id="res-loading"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg> Supporter is reviewing the video...</div>
+              <div class="res-body hide" id="res-body"></div>
+              <button id="back-discover" style="margin-top:22px;font-size:13px;color:var(--ink-3);display:flex;align-items:center;gap:6px">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg> Back to discover
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- right: doc -->
+        <div id="right-doc" class="hide" style="flex-direction:column;min-height:0;flex:1">
+          <div class="rhead-row"><span class="rhead">Summary</span>
+            <div class="acts hide" id="doc-acts">
+              <button class="act copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copy</button>
+              <button class="act save" data-save="doc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h12v18l-6-4-6 4z"/></svg>Save</button>
+              <button class="act revise" data-revise="doc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Revise</button>
+            </div>
+          </div>
+          <div class="scroll" style="display:flex;flex-direction:column">
+            <div class="empty" id="doc-empty">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="#FFC93C"/></svg>
+              <p>Summarize your document<br>with one click!</p>
+            </div>
+            <div id="doc-loading" class="hide">
+              <div class="est"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Estimated time · 11s</div>
+              <div class="skbars" id="doc-sk"></div>
+            </div>
+            <div id="doc-result" class="hide sum"></div>
+          </div>
+        </div>
+
+        <!-- right: web -->
+        <div id="right-web" class="hide" style="flex-direction:column;min-height:0;flex:1">
+          <div class="rhead-row"><span class="rhead">Summary</span>
+            <div class="acts hide" id="web-acts">
+              <button class="act copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copy</button>
+              <button class="act save" data-save="web"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h12v18l-6-4-6 4z"/></svg>Save</button>
+              <button class="act revise" data-revise="web"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Revise</button>
+            </div>
+          </div>
+          <div class="scroll" style="display:flex;flex-direction:column">
+            <div class="empty" id="web-empty">
+              <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" fill="#FF6B5E"/><rect x="3" y="5" width="18" height="4" rx="2" fill="#E0463A"/><circle cx="6" cy="7" r=".8" fill="#fff"/><path d="M6 13h7M6 16h5" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/><path d="M15 14l5 5-2 .3-1 2z" fill="#FFB9B2"/></svg>
+              <p>Summarize any website<br>with one click!</p>
+            </div>
+            <div id="web-loading" class="hide">
+              <div class="est"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Estimated time · 9s</div>
+              <div class="skbars" id="web-sk"></div>
+            </div>
+            <div id="web-result" class="hide sum"></div>
+          </div>
+        </div>
+
+        <!-- right: text -->
+        <div id="right-text" class="hide" style="flex-direction:column;min-height:0;flex:1">
+          <div class="rhead-row"><span class="rhead">Summary</span>
+            <div class="acts hide" id="text-acts">
+              <button class="act copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copy</button>
+              <button class="act save" data-save="text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h12v18l-6-4-6 4z"/></svg>Save</button>
+              <button class="act revise" data-revise="text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Revise</button>
+            </div>
+          </div>
+          <div class="scroll" style="display:flex;flex-direction:column">
+            <div class="empty" id="text-empty">
+              <svg viewBox="0 0 24 24" fill="none"><rect x="5" y="3" width="14" height="18" rx="2" fill="#F19BE0"/><path d="M9 8h6M9 12h6M9 16h4" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/><rect x="10" y="1.5" width="4" height="3" rx="1.2" fill="#D45EC0"/></svg>
+              <p>Summarize long text<br>with one click!</p>
+            </div>
+            <div id="text-loading" class="hide">
+              <div class="est"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Estimated time · 6s</div>
+              <div class="skbars" id="text-sk"></div>
+            </div>
+            <div id="text-result" class="hide sum"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- LIBRARY VIEW -->
+    <div class="library hide" id="library">
+      <div class="lib-head">
+        <h2>Library</h2>
+        <div class="lib-stat" id="lib-stat">📚 <b>23</b> summaries saved · ⏱ ~<b>8h</b> of reading saved</div>
+      </div>
+      <div class="lib-search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="lib-q" type="text" placeholder="Search your summaries" />
+      </div>
+      <div class="lib-filters" id="lib-filters">
+        <button class="lf active" data-f="all">All</button>
+        <button class="lf" data-f="youtube">YouTube</button>
+        <button class="lf" data-f="document">Document</button>
+        <button class="lf" data-f="website">Website</button>
+        <button class="lf" data-f="text">Text</button>
+      </div>
+      <div class="lib-grid" id="lib-grid"></div>
+    </div>
+  </div>
+</div>
+
+<button class="chat-fab"><img class="av" src="SupporterAvatar.png" alt="" /> Chat</button>
+
+<!-- Revise chat -->
+<div class="chat-back" id="chat-back"></div>
+<div class="chat-panel" id="chat-panel">
+  <div class="chat-head">
+    <button><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+    <span class="mid">Roi</span>
+    <button id="chat-close"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div class="chat-body">
+    <div class="chat-date">Mar 09, 2026</div>
+    <div class="chat-msg">
+      <div class="who"><img class="av" src="SupporterAvatar.png" alt="" /> Roi</div>
+      <div class="bubble">Hi! I can help you refine this summary. Want it shorter, more formal, turned into bullet points, or translated? Just tell me what to change and I'll rewrite it.</div>
+      <div class="tools">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h12v18l-6-4-6 4z"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8.5a5 5 0 0 0-9-3 5 5 0 0 0-9 3c0 5 9 11 9 11s9-6 9-11z"/></svg>
+        <span>· 10:01 PM</span>
+      </div>
+    </div>
+  </div>
+  <div class="chat-input">
+    <div class="ctx-chip">
+      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3v5h5M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></div>
+      <div class="meta"><b id="ctx-label">Summary</b><span>AI Summarizer</span></div>
+      <button class="x" id="ctx-x"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="chat-field">
+      <button class="plus"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button>
+      <input type="text" placeholder="Make it shorter, more formal, …" />
+      <button class="send"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const $=(s,el=document)=>el.querySelector(s), $$=(s,el=document)=>[...el.querySelectorAll(s)];
+
+  function btnLoading(btn,on){if(!btn)return;
+    if(on){if(!btn.dataset.txt)btn.dataset.txt=btn.textContent;btn.classList.add('loading');btn.style.pointerEvents='none';
+      btn.innerHTML=btn.classList.contains('btn-bottom')?'<span class="spin"></span> Summarizing…':'<span class="spin"></span>';}
+    else{btn.classList.remove('loading');btn.style.pointerEvents='';btn.textContent=btn.dataset.txt||'Summarize';}}
+
+  /* ---------- YouTube ---------- */
+  const TREND=[
+    {id:"UF8uR6Z6KLc",t:"Steve Jobs' 2005 Stanford Commencement Address",c:"Stanford",d:"Jun 18, 2026",v:"358,554 views"},
+    {id:"dQw4w9WgXcQ",t:"Rick Astley - Never Gonna Give You Up (Official Video)",c:"Rick Astley",d:"Jun 18, 2026",v:"252,298 views"},
+    {id:"kJQP7kiw5Fk",t:"Luis Fonsi - Despacito ft. Daddy Yankee",c:"Luis Fonsi",d:"Jun 18, 2026",v:"179,014 views"},
+    {id:"JGwWNGJdvx8",t:"Ed Sheeran - Shape of You (Official Music Video)",c:"Ed Sheeran",d:"Jun 18, 2026",v:"194,449 views",flag:"LIVE"},
+    {id:"OPf0YbXqDm0",t:"Mark Ronson - Uptown Funk ft. Bruno Mars",c:"Mark Ronson",d:"Jun 18, 2026",v:"64,899 views"},
+    {id:"fJ9rUzIMcZQ",t:"Queen – Bohemian Rhapsody (Official Video)",c:"Queen Official",d:"Jun 17, 2026",v:"296,009 views"},
+    {id:"hT_nvWreIhg",t:"OneRepublic - Counting Stars (Official Video)",c:"OneRepublic",d:"Jun 17, 2026",v:"142,770 views"},
+    {id:"2Vv-BfVoq4g",t:"Ed Sheeran - Perfect (Official Music Video)",c:"Ed Sheeran",d:"Jun 17, 2026",v:"88,902 views"},
+    {id:"7wtfhZwyrcc",t:"Imagine Dragons - Believer (Official Music Video)",c:"Imagine Dragons",d:"Jun 16, 2026",v:"311,455 views"},
+  ];
+  const RECENT=[
+    TREND[0],
+    {id:"eIho2S0ZahI",t:"How to Speak so That People Want to Listen | TED",c:"TED",d:"Jun 16, 2026",v:"120,400 views"},
+    {id:"arj7oStGLkU",t:"Inside the Mind of a Master Procrastinator | Tim Urban | TED",c:"TED",d:"Jun 15, 2026",v:"98,210 views"},
+    {id:"rrkrvAUbU9Y",t:"The Puzzle of Motivation | Dan Pink | TED",c:"TED",d:"Jun 14, 2026",v:"77,540 views"},
+  ];
+  const CURATED={
+    "UF8uR6Z6KLc":{
+      transcript:[["00:00:12","I am honored to be with you today"],["00:00:30","Truth be told, I never graduated from college"],["00:01:10","Today I want to tell you three stories from my life"],["00:01:25","The first story is about connecting the dots"],["00:02:00","I dropped out of Reed College after six months"],["00:02:40","I decided to take a calligraphy class"]],
+      summary:["Steve Jobs shares three personal stories to inspire graduates to trust their own journey.","He reframes failure—like being fired from Apple—as the catalyst for his most creative work.",'Facing mortality, he urges everyone to follow their heart and "Stay Hungry, Stay Foolish."'],
+      timeline:[["00:00","Opening — honored to speak, sets up three stories","Jobs thanks the audience and frames the talk around three personal stories — nothing more."],["01:25","Story 1 · Connecting the dots (dropping out, calligraphy)","Dropping out let him drift into a calligraphy class that later shaped the Mac's typography. The dots only connected looking backward."],["06:45","Story 2 · Love and loss (fired from Apple, founds NeXT & Pixar)","Getting fired from Apple freed him to start NeXT and Pixar and rediscover the work he loved."],["09:20",'Story 3 · Death ("Stay Hungry. Stay Foolish.")',"A cancer diagnosis reframes mortality as the clearest tool for making life's big choices."],["14:10","Closing remarks to the graduating class","He signs off with the Whole Earth Catalog's farewell: Stay Hungry. Stay Foolish."]],
+      key:'The core idea is that you cannot connect the dots looking forward—only backward—so you must trust they will connect. Jobs argues that <b>loving what you do</b> and never settling is the only way to do great work.',
+      blog:'<h3>Three Stories, One Lesson</h3><p>Few commencement speeches have aged as well as this one. In fifteen minutes Jobs distills a career into three simple stories.</p>'
+    }
+  };
+  function template(v){return{
+    transcript:[["00:00:06","Intro — the opening sets the mood"],["00:00:28","The first lines establish the theme"],["00:00:55","The hook is introduced"],["00:01:30","The main section repeats the central line"],["00:02:08","A shift in energy or perspective"],["00:02:45","Final section and outro"]],
+    summary:[`"${v.t}" from ${v.c} centers on one clear idea and builds steadily toward it.`,`It leans on a strong, repeated hook so the main message is easy to remember.`,`The piece closes on that signature line, leaving viewers with its core feeling.`],
+    timeline:[["00:00","Intro — opening atmosphere and first lines",`The opening sets the tone for "${v.t}" and introduces its core idea.`],["00:45","Section 1 — sets up the theme","The first section develops the main theme and gives it context."],["01:30","The main hook lands","The central, most memorable moment of the piece arrives."],["02:20","A change in mood or perspective","The piece shifts gears to keep things fresh and hold attention."],["03:05","Final section & outro","Everything resolves and it closes on its signature note."]],
+    key:`The strength of "${v.t}" is focus: ${v.c} keeps one idea front and center and uses repetition and contrast so the main line stays with you.`,
+    blog:`<h3>What makes "${v.t}" work</h3><p>${v.c} keeps the structure simple on purpose—one idea, delivered well, repeated just enough.</p>`
+  };}
+  function dataFor(v){return Object.assign({},v,CURATED[v.id]||template(v));}
+
+  $('#trend-grid').innerHTML=TREND.map((v,i)=>`
+    <div class="tcard" data-i="${i}"><div class="thumb">${v.flag?`<span class="flag">${v.flag}</span>`:''}<img src="https://i.ytimg.com/vi/${v.id}/hqdefault.jpg" alt="" loading="lazy"><div class="ov"><div class="pl"></div></div></div>
+      <div class="tt">${v.t}</div><div class="tc">${v.c}</div><div class="tv">${v.d} · ${v.v}</div></div>`).join('');
+  $$('#trend-grid .tcard').forEach(el=>el.addEventListener('click',()=>selectVideo(TREND[+el.dataset.i])));
+  $('#recent-list').innerHTML=RECENT.map((v,i)=>`<a class="r-item" href="#" data-i="${i}"><span class="yt-logo"></span><span>${v.t}</span></a>`).join('');
+  $$('#recent-list .r-item').forEach(el=>el.addEventListener('click',e=>{e.preventDefault();selectVideo(RECENT[+el.dataset.i]);}));
+
+  let CURRENT=null,timer=null;
+  const SKEL='<div class="sk" style="height:16px;width:92%;margin-bottom:12px"></div><div class="sk" style="height:16px;width:80%;margin-bottom:12px"></div><div class="sk" style="height:16px;width:64%"></div>';
+  function toSec(t){const p=t.split(':').map(Number);return p.length===3?p[0]*3600+p[1]*60+p[2]:p[0]*60+p[1];}
+  function seekVideo(sec,lbl){if(!CURRENT||!CURRENT.id){return;}
+    $('#yt-frame').src='https://www.youtube.com/embed/'+CURRENT.id+'?start='+sec+'&autoplay=1';
+    $('#left-youtube').scrollTo({top:0,behavior:'smooth'});toast('▶ Jumping to '+(lbl||sec+'s'));}
+  function renderResTab(tab){const b=$('#res-body');if(!CURRENT)return;
+    if(tab==='timeline'){
+      b.innerHTML='<div class="tlx-wrap">'+CURRENT.timeline.map(r=>`<div class="tlx"><div class="tlx-head"><span class="ttl">${r[1]}</span><button class="tm" data-sec="${toSec(r[0])}" data-lbl="${r[0]}" title="Jump to ${r[0]}"><span class="pl"></span>${r[0]}</button><span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span></div><div class="tlx-detail">${r[2]||r[1]}</div></div>`).join('')+'</div>';
+      b.querySelectorAll('.tlx-head').forEach(h=>h.addEventListener('click',e=>{if(e.target.closest('.tm'))return;h.parentElement.classList.toggle('open');}));
+      b.querySelectorAll('.tm').forEach(t=>t.addEventListener('click',e=>{e.stopPropagation();seekVideo(+t.dataset.sec,t.dataset.lbl);}));
+    }
+    else if(tab==='key')b.innerHTML=`<div class="res-box" style="margin-top:4px">${CURRENT.key}</div>`;
+    else if(tab==='blog')b.innerHTML=`<div class="res-box" style="margin-top:4px">${CURRENT.blog}</div>`;
+    else if(tab==='tldr')b.innerHTML=`<div class="res-box" style="margin-top:4px"><b style="color:var(--ink)">TL;DR — </b>${CURRENT.summary[0]}</div>`;
+    else if(tab==='tweet')b.innerHTML='<div class="tweets">'+[`🧵 ${CURRENT.t} — a quick thread:`].concat(CURRENT.summary.map((s,i)=>`${i+1}/ ${s}`)).concat([`📌 Summarized in seconds with AI Summarizer. #AI #Summary`]).map(x=>`<div class="tweet">${x}</div>`).join('')+'</div>';
+    else if(tab==='email')b.innerHTML=`<div class="res-box" style="margin-top:4px;white-space:pre-line"><b style="color:var(--ink)">Subject:</b> Quick summary — ${CURRENT.t}\n\nHi there,\n\nHere's a quick recap:\n${CURRENT.summary.map(s=>'• '+s).join('\n')}\n\nBest,\nSent via AI Summarizer</div>`;
+    else if(tab==='cards')b.innerHTML='<div class="cards">'+[[`What is "${CURRENT.t}" about?`,CURRENT.summary[0]],['What is the key takeaway?',CURRENT.summary[1]||CURRENT.summary[0]],['How does it wrap up?',CURRENT.summary[2]||CURRENT.summary[0]]].map(c=>`<div class="card"><div class="q">Q. ${c[0]}</div><div class="a">A. ${c[1]}</div></div>`).join('')+'</div>';}
+  function selectVideo(v){const d=dataFor(v);CURRENT=d;
+    $('#video-empty').classList.add('hide');$('#video-loaded').classList.remove('hide');
+    $('#yt-frame').src='https://www.youtube.com/embed/'+v.id;$('#yt-frame').title=v.t;
+    $('#v-title-text').textContent=v.t;$('#v-meta').textContent=v.c+' · '+v.d;$('#v-views').textContent=v.v||'';
+    $('#v-transcript').innerHTML=d.transcript.map(r=>`<div class="tl-row"><span class="t">${r[0]}</span><span class="s">${r[1]}</span></div>`).join('');
+    $('#left-youtube').scrollTo({top:0,behavior:'smooth'});
+    $('#yt-url').value='https://www.youtube.com/watch?v='+v.id;
+    $('#yt-trending').classList.add('hide');$('#yt-result').classList.remove('hide');
+    $('#res-box').innerHTML=SKEL;$('#res-loading').classList.remove('hide');$('#res-body').classList.add('hide');
+    $('#right-scroll').scrollTo({top:0,behavior:'smooth'});
+    btnLoading($('#yt-go'),true);
+    clearTimeout(timer);timer=setTimeout(()=>{
+      $('#res-box').innerHTML='<ul>'+d.summary.map(s=>`<li>${s}</li>`).join('')+'</ul>';
+      $('#res-loading').classList.add('hide');$('#res-body').classList.remove('hide');
+      btnLoading($('#yt-go'),false);
+      $$('.pill').forEach(p=>p.classList.remove('active'));$('.pill[data-rtab="timeline"]').classList.add('active');renderResTab('timeline');
+    },1600);}
+  function removeVideo(){$('#yt-result').classList.add('hide');$('#yt-trending').classList.remove('hide');
+    $('#video-loaded').classList.add('hide');$('#video-empty').classList.remove('hide');
+    $('#yt-frame').src='';$('#yt-url').value='';CURRENT=null;$('#right-scroll').scrollTo({top:0});}
+  function extractId(u){try{const x=new URL(u);return x.hostname.includes('youtu.be')?x.pathname.slice(1):(x.searchParams.get('v')||'');}catch(e){return '';}}
+  $('#yt-go').addEventListener('click',()=>{const u=$('#yt-url').value.trim();if(!u){toast('Please enter a YouTube link');return;}
+    const id=extractId(u);const v=TREND.find(x=>x.id===id)||RECENT.find(x=>x.id===id)||{id:id||'UF8uR6Z6KLc',t:'YouTube Video',c:'YouTube',d:'2026',v:''};selectVideo(v);});
+  $('#yt-url').addEventListener('keydown',e=>{if(e.key==='Enter')$('#yt-go').click();});
+  $('#yt-clear').addEventListener('click',()=>{$('#yt-url').value='';$('#yt-url').focus();});
+  $('#vremove').addEventListener('click',removeVideo);
+  $('#back-discover').addEventListener('click',removeVideo);
+  $$('.pill').forEach(p=>p.addEventListener('click',()=>{$$('.pill').forEach(x=>x.classList.remove('active'));p.classList.add('active');renderResTab(p.dataset.rtab);}));
+
+  /* ---------- Tabs ---------- */
+  const LEFT={youtube:'#left-youtube',doc:'#left-doc',web:'#left-web',text:'#left-text'};
+  const RIGHT={youtube:'#right-youtube',doc:'#right-doc',web:'#right-web',text:'#right-text'};
+  $$('.src-tab').forEach(t=>t.addEventListener('click',()=>{
+    $$('.src-tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');const s=t.dataset.src;
+    Object.values(LEFT).forEach(id=>$(id).classList.add('hide'));Object.values(RIGHT).forEach(id=>{$(id).classList.add('hide');$(id).style.display='';});
+    $(LEFT[s]).classList.remove('hide');$(RIGHT[s]).classList.remove('hide');if(s!=='youtube')$(RIGHT[s]).style.display='flex';
+  }));
+
+  /* ---------- Skeleton bars ---------- */
+  const WIDTHS=['38%','96%','90%','84%','72%','45%','94%','86%','80%','58%','92%','70%'];
+  function bars(n){return WIDTHS.slice(0,n).map(w=>`<div class="sk skbar" style="width:${w}"></div>`).join('');}
+
+  /* ---------- Document ---------- */
+  const DOC_SUMMARY=`
+    <ul>
+      <li><b>Title:</b> The State of Remote Work 2026</li>
+      <li><b>Publisher:</b> Horizon Research Institute</li>
+      <li><b>Type:</b> Annual industry report (28 pages)</li>
+    </ul>
+    <h3>Key Findings</h3>
+    <ol>
+      <li><b>Hybrid is the default</b> — 64% of organizations now run hybrid schedules.</li>
+      <li><b>Productivity held</b> — 58% report stable or improved output.</li>
+      <li><b>Collaboration is the top challenge</b>, cited by 41% of teams.</li>
+    </ol>
+    <h3>Methodology</h3>
+    <ul>
+      <li>Survey of <b>2,400 companies</b> across <b>18 countries</b></li>
+      <li>Combined with structured interviews with people leaders</li>
+    </ul>
+    <h3>Outlook</h3>
+    <ul>
+      <li>Spending on async collaboration tools projected to grow <b>30% YoY</b></li>
+      <li>Hybrid expected to remain the dominant model through 2027</li>
+    </ul>`;
+  let docFiled=false;
+  $('#doc-field').addEventListener('click',()=>{if(docFiled)return;docFiled=true;
+    $('#doc-field').classList.add('has');$('#doc-prompt').classList.add('hide');$('#doc-fileview').classList.remove('hide');
+    $('#doc-name').textContent='2026_Market_Report.pdf';
+    $('#doc-taste').classList.remove('hide');$('#doc-go').classList.add('on');});
+  function docResetFile(){docFiled=false;$('#doc-field').classList.remove('has');
+    $('#doc-prompt').classList.remove('hide');$('#doc-fileview').classList.add('hide');
+    $('#doc-taste').classList.add('hide');$('#doc-page').classList.add('hide');$('#doc-go').classList.remove('on');
+    $('#doc-empty').classList.remove('hide');$('#doc-loading').classList.add('hide');$('#doc-result').classList.add('hide');$('#doc-acts').classList.add('hide');}
+  $('#doc-rm').addEventListener('click',e=>{e.stopPropagation();docResetFile();});
+  $('#doc-go').addEventListener('click',()=>{if(!docFiled){toast('Please add a file first');return;}
+    $('#doc-taste').classList.add('hide');$('#doc-page').classList.remove('hide');
+    $('#doc-empty').classList.add('hide');$('#doc-result').classList.add('hide');$('#doc-acts').classList.add('hide');
+    $('#doc-sk').innerHTML=bars(12);$('#doc-loading').classList.remove('hide');btnLoading($('#doc-go'),true);
+    clearTimeout(timer);timer=setTimeout(()=>{$('#doc-loading').classList.add('hide');btnLoading($('#doc-go'),false);
+      $('#doc-result').innerHTML=DOC_SUMMARY;$('#doc-result').classList.remove('hide');$('#doc-acts').classList.remove('hide');},2000);});
+
+  /* ---------- Website ---------- */
+  const WEB_SUMMARY=`
+    <ul>
+      <li><b>Title:</b> How AI Agents Are Reshaping Software in 2026</li>
+      <li><b>Source:</b> TechDaily · By Jordan Lee</li>
+      <li><b>Length:</b> ~6 min read</li>
+    </ul>
+    <h3>Main Points</h3>
+    <ol>
+      <li><b>Agents went mainstream</b> — moving from demos to production workflows.</li>
+      <li><b>Tooling matured</b> — orchestration frameworks and evals became standard.</li>
+      <li><b>New risks emerged</b> — reliability and oversight are now key concerns.</li>
+    </ol>
+    <h3>Takeaway</h3>
+    <ul>
+      <li>Teams that pair agents with <b>strong guardrails and human review</b> see the biggest gains.</li>
+    </ul>`;
+  let webReady=false;
+  $('#web-input').addEventListener('input',e=>{webReady=e.target.value.toLowerCase().includes('.com');
+    $('#web-go').classList.toggle('on',webReady);$('#web-page').classList.toggle('hide',!webReady);});
+  $('#web-go').addEventListener('click',()=>{if(!webReady){toast('The link must include “.com”');return;}
+    $('#web-empty').classList.add('hide');$('#web-result').classList.add('hide');$('#web-acts').classList.add('hide');
+    $('#web-sk').innerHTML=bars(11);$('#web-loading').classList.remove('hide');btnLoading($('#web-go'),true);
+    clearTimeout(timer);timer=setTimeout(()=>{$('#web-loading').classList.add('hide');btnLoading($('#web-go'),false);
+      $('#web-result').innerHTML=WEB_SUMMARY;$('#web-result').classList.remove('hide');$('#web-acts').classList.remove('hide');},1800);});
+
+  /* ---------- Text ---------- */
+  const TEXT_SUMMARY=`<ul><li>The text's central idea is stated up front and supported with concrete examples.</li><li>Key points are organized so the main argument is easy to follow.</li><li>It closes by restating the takeaway readers should remember.</li></ul>`;
+  let textReady=false;
+  $('#text-input').addEventListener('input',e=>{textReady=e.target.value.trim().length>10;$('#text-go').classList.toggle('on',textReady);});
+  $('#text-go').addEventListener('click',()=>{if(!textReady){toast('Please enter some text');return;}
+    $('#text-empty').classList.add('hide');$('#text-result').classList.add('hide');$('#text-acts').classList.add('hide');
+    $('#text-sk').innerHTML=bars(8);$('#text-loading').classList.remove('hide');btnLoading($('#text-go'),true);
+    clearTimeout(timer);timer=setTimeout(()=>{$('#text-loading').classList.add('hide');btnLoading($('#text-go'),false);
+      $('#text-result').innerHTML=TEXT_SUMMARY;$('#text-result').classList.remove('hide');$('#text-acts').classList.remove('hide');},1500);});
+
+  /* ---------- Revise chat ---------- */
+  const CTX={doc:'Overview · The State of Remote Work 2026',web:'Article Overview · How AI Agents Are Reshaping...',text:'Summary · Central idea stated up front...'};
+  function openChat(label){$('#ctx-label').textContent=label;$('.ctx-chip').style.display='';$('#chat-panel').classList.add('open');$('#chat-back').classList.add('open');}
+  function closeChat(){$('#chat-panel').classList.remove('open');$('#chat-back').classList.remove('open');}
+  $$('.act.revise').forEach(b=>b.addEventListener('click',()=>openChat(CTX[b.dataset.revise]||'Summary')));
+  $('#chat-close').addEventListener('click',closeChat);
+  $('#chat-back').addEventListener('click',closeChat);
+  $('#ctx-x').addEventListener('click',()=>$('.ctx-chip').style.display='none');
+
+  /* ---------- Q&A chat ---------- */
+  function appendMsg(who,text){const body=$('.chat-body');
+    const html=who==='me'?`<div class="chat-msg me"><div class="bubble">${text.replace(/\n/g,'<br>')}</div></div>`
+      :`<div class="chat-msg mimi"><div class="who"><img class="av" src="SupporterAvatar.png" alt=""> Roi</div><div class="bubble">${text.replace(/\n/g,'<br>')}</div></div>`;
+    body.insertAdjacentHTML('beforeend',html);body.scrollTop=body.scrollHeight;}
+  function mimiReply(q){const lo=q.toLowerCase();const has=CURRENT&&CURRENT.summary;
+    if(/short|짧|tldr|tl;dr|줄여|간단/.test(lo)&&has)return `Sure — in one line: ${CURRENT.summary[0]}`;
+    if(/bullet|점|목록|리스트/.test(lo)&&has)return '• '+CURRENT.summary.join('\n• ');
+    if(/translate|번역|korean|한국|spanish|french|일본/.test(lo))return `I can translate it. Just tell me the language and I'll rewrite the whole summary in it.`;
+    if(/formal|격식|professional/.test(lo)&&has)return `A more formal take: ${CURRENT.summary[0]}`;
+    if(has)return `Based on the summary: ${CURRENT.summary[Math.min(1,CURRENT.summary.length-1)]}\nWant me to expand on any specific point?`;
+    return `Got it! Tell me how you'd like it changed — shorter, more formal, bullet points, or translated.`;}
+  function chatSend(){const inp=$('.chat-field input');const q=inp.value.trim();if(!q)return;inp.value='';appendMsg('me',q);setTimeout(()=>appendMsg('mimi',mimiReply(q)),450);}
+  $('.chat-field .send').addEventListener('click',chatSend);
+  $('.chat-field input').addEventListener('keydown',e=>{if(e.key==='Enter')chatSend();});
+  $('.chat-fab').addEventListener('click',()=>openChat(CURRENT?('Summary · '+CURRENT.t):'Summary'));
+
+  /* ---------- Library ---------- */
+  const LIB=[
+    {type:'youtube',id:'UF8uR6Z6KLc',t:"Steve Jobs' 2005 Stanford Commencement Address",src:'Stanford',date:'Jun 18',snip:'Three stories about trusting your journey, embracing failure, and facing mortality.'},
+    {type:'document',t:'The State of Remote Work 2026',src:'PDF · Horizon Research',date:'Jun 17',snip:'Hybrid is the default, productivity held, collaboration is the top challenge.'},
+    {type:'youtube',id:'kJQP7kiw5Fk',t:'Luis Fonsi - Despacito ft. Daddy Yankee',src:'Luis Fonsi',date:'Jun 18',snip:'A global summer hit built on one unforgettable, endlessly repeated hook.'},
+    {type:'website',t:'How AI Agents Are Reshaping Software',src:'techdaily.com',date:'Jun 17',snip:'Agents moved from demos to production; reliability and guardrails matter most.'},
+    {type:'youtube',id:'7wtfhZwyrcc',t:'Imagine Dragons - Believer',src:'Imagine Dragons',date:'Jun 16',snip:'Turning pain into fuel — a driving anthem about resilience.'},
+    {type:'text',t:'Q3 strategy memo (pasted)',src:'Text',date:'Jun 15',snip:'Focus on retention, ship fewer but bigger bets, and double down on AI.'},
+    {type:'website',t:'Designing for Trust in AI Products',src:'uxblog.io',date:'Jun 14',snip:'Transparency, user control, and graceful failure are what build trust.'},
+    {type:'youtube',id:'2Vv-BfVoq4g',t:'Ed Sheeran - Perfect',src:'Ed Sheeran',date:'Jun 15',snip:'A modern, heartfelt wedding ballad kept deliberately simple.'},
+  ];
+  const TYPEMETA={youtube:{c:'#FF0000',lbl:'YouTube'},document:{c:'#FFC93C',lbl:'PDF'},website:{c:'#F54211',lbl:'Web'},text:{c:'#F19BE0',lbl:'Text'}};
+  let libFilter='all';
+  function renderLib(filter,q){filter=filter||'all';q=(q||'').toLowerCase();
+    const items=LIB.filter(x=>(filter==='all'||x.type===filter)&&(!q||x.t.toLowerCase().includes(q)||x.snip.toLowerCase().includes(q)));
+    $('#lib-grid').innerHTML=items.length?items.map(x=>{const tm=TYPEMETA[x.type];const idx=LIB.indexOf(x);
+      const thumb=x.type==='youtube'
+        ?`<div class="lthumb"><img src="https://i.ytimg.com/vi/${x.id}/hqdefault.jpg" alt=""><span class="badge">▶ ${x.date}</span></div>`
+        :`<div class="lthumb" style="background:linear-gradient(135deg,${tm.c}30,#15151800)"><div class="licon" style="background:${tm.c};color:#0b0b0d;font-weight:800;font-size:13px">${tm.lbl[0]}</div><span class="badge">${tm.lbl} · ${x.date}</span></div>`;
+      return `<div class="lcard" data-i="${idx}">${thumb}<div class="lbody"><div class="lt">${x.t}</div><div class="lsrc">${x.src}</div><div class="lsnip">${x.snip}</div></div></div>`;
+    }).join(''):'<div style="color:var(--ink-3);font-size:14px;padding:30px 0">No summaries match your search.</div>';
+    $$('#lib-grid .lcard').forEach(el=>el.addEventListener('click',()=>{const x=LIB[+el.dataset.i];
+      if(x.type==='youtube'&&x.id){navTo('tools');const v=TREND.find(y=>y.id===x.id)||RECENT.find(y=>y.id===x.id)||{id:x.id,t:x.t,c:x.src,d:x.date,v:''};selectVideo(v);}
+      else toast('Opening "'+x.t+'"…');}));}
+  $$('#lib-filters .lf').forEach(b=>b.addEventListener('click',()=>{$$('#lib-filters .lf').forEach(x=>x.classList.remove('active'));b.classList.add('active');libFilter=b.dataset.f;renderLib(libFilter,$('#lib-q').value);}));
+  $('#lib-q').addEventListener('input',e=>renderLib(libFilter,e.target.value));
+
+  /* ---------- Save flow ---------- */
+  const SAVE_ITEMS={
+    doc:{type:'document',t:'The State of Remote Work 2026',src:'PDF · Horizon Research',date:'Just now',snip:'Hybrid is the default, productivity held, collaboration is the top challenge.'},
+    web:{type:'website',t:'How AI Agents Are Reshaping Software',src:'techdaily.com',date:'Just now',snip:'Agents moved from demos to production; reliability and guardrails matter most.'},
+    text:{type:'text',t:'Pasted text summary',src:'Text',date:'Just now',snip:'The central idea up front, organized key points, and a clear closing takeaway.'}
+  };
+  let libCount=23;
+  const savedKeys=new Set();
+  const CHECK_SVG='<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>';
+  function updateLibStat(){const el=$('#lib-stat');if(el)el.innerHTML=`📚 <b>${libCount}</b> summaries saved · ⏱ ~<b>${Math.round(libCount*0.35)}h</b> of reading saved`;}
+  function doSave(btn,key){
+    if(savedKeys.has(key)){toast('Already in your Library');return;}
+    btn.style.pointerEvents='none';
+    btn.innerHTML='<span class="spin"></span> Saving…';
+    setTimeout(()=>{
+      savedKeys.add(key);
+      const it=SAVE_ITEMS[key]; if(it)LIB.unshift(Object.assign({},it));
+      libCount++; updateLibStat();
+      btn.innerHTML=CHECK_SVG+' Saved'; btn.classList.add('saved'); btn.style.pointerEvents='';
+      toast('Saved to Library');
+    },700);
+  }
+  $$('.act.save').forEach(b=>b.addEventListener('click',()=>doSave(b,b.dataset.save)));
+
+  /* ---------- Rail navigation ---------- */
+  function navTo(nav){$$('.rail-item').forEach(x=>x.classList.remove('active'));
+    const btn=$(`.rail-item[data-nav="${nav}"]`);if(btn)btn.classList.add('active');
+    if(nav==='saved'){$('.panels').classList.add('hide');$('#library').classList.remove('hide');renderLib(libFilter,$('#lib-q').value);}
+    else if(nav==='tools'){$('#library').classList.add('hide');$('.panels').classList.remove('hide');}}
+  $$('.rail-item').forEach(b=>b.addEventListener('click',()=>{const nav=b.dataset.nav;
+    if(nav==='chat')openChat(CURRENT?('Summary · '+CURRENT.t):'Summary');
+    else if(nav==='deals')toast('Deals — coming soon');
+    else navTo(nav);}));
+
+  /* ---------- Theme toggle ---------- */
+  const SUN_IC='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+  const MOON_IC='<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+  function applyThemeIcon(){$('#theme-toggle').innerHTML=document.documentElement.classList.contains('light')?MOON_IC:SUN_IC;}
+  $('#theme-toggle').addEventListener('click',()=>{const light=document.documentElement.classList.toggle('light');try{localStorage.setItem('theme',light?'light':'dark');}catch(e){}applyThemeIcon();});
+  applyThemeIcon();
+
+  /* ---------- misc ---------- */
+  function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600);}
+  document.addEventListener('click',e=>{if(e.target.closest('.copy'))toast('Copied');});
+</script>
+</body>
+</html>
