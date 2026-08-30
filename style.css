@@ -1,0 +1,698 @@
+/* ─────────────────────────────────────────────────────────────
+   Se Yeon Choi — portfolio
+   left column: andychung.me  ·  right column + motion: seungmee-lee.com
+   ───────────────────────────────────────────────────────────── */
+
+:root{
+  --bg:#ffffff;
+  --ink:#111111;
+  --mid:#666666;
+  --dim:#a8a8a8;
+  --line:#e8e8e8;
+  --field:rgba(0,0,0,.045);
+  --accent:#4d9da6;          /* overwritten per visitor by script.js */
+  --scrim:rgba(18,18,18,.34);
+  --pad:28px;
+  --col:min(512px, 46vw);    /* andychung.me measure */
+}
+
+:root[data-theme="dark"]{
+  --bg:#222222;              /* andychung.me ground */
+  --ink:#eeeeee;
+  --mid:#aaaaaa;
+  --dim:#777777;
+  --line:#343434;
+  --field:rgba(255,255,255,.07);
+  --scrim:rgba(0,0,0,.55);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+html,body{height:100%}
+
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:15px;
+  line-height:24px;
+  -webkit-font-smoothing:antialiased;
+  overflow:hidden;
+  transition:background .4s ease,color .4s ease;
+}
+
+a{color:inherit;text-decoration:none}
+
+button{
+  font:inherit;color:inherit;background:none;border:0;cursor:pointer;
+}
+
+/* ── shared UI type (seungmee-lee.com register) ───────────── */
+.projects,.pill{
+  font-size:12px;
+  line-height:1.4;
+  font-weight:500;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+}
+
+.stage{position:relative;height:100%;width:100%}
+
+/* ── left · prose panels (andychung.me) ───────────────────── */
+.left{
+  position:fixed;
+  top:var(--pad);
+  left:var(--pad);
+  width:var(--col);
+}
+
+.panel{
+  position:absolute;top:0;left:0;width:100%;
+  opacity:0;visibility:hidden;
+  transform:translateY(4px);
+  transition:opacity .35s ease,transform .35s ease,visibility .35s;
+}
+.panel.is-on{opacity:1;visibility:visible;transform:none}
+.panel[hidden]{display:none}
+
+.panel p{margin-bottom:18px;color:var(--ink)}
+.panel p:last-child{margin-bottom:0}
+.panel .name{color:var(--mid)}
+
+.panel a{
+  border-bottom:1px solid var(--dim);
+  padding-bottom:1px;
+  transition:border-color .2s ease,color .2s ease;
+}
+.panel a:hover{color:var(--accent);border-color:var(--accent)}
+
+.lang[hidden]{display:none}
+
+/* ── experience list inside ABOUT ─────────────────────────── */
+.exp-label{
+  margin:26px 0 8px !important;
+  font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--dim) !important;
+}
+.exp{list-style:none;font-size:12.5px;line-height:1.45}
+.exp li{
+  display:flex;align-items:baseline;gap:10px;
+  padding:8px 1px;
+  border-top:1px solid var(--line);
+}
+.exp li:last-child{border-bottom:1px solid var(--line)}
+.exp .co{flex:0 0 41%;color:var(--ink)}
+.exp .ro{flex:1 1 auto;color:var(--mid)}
+.exp .yr{
+  flex:0 0 116px;text-align:right;
+  color:var(--dim);white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+
+@media (max-width:520px){
+  .exp li{flex-wrap:wrap;gap:2px 10px}
+  .exp .co{flex:1 1 100%}
+  .exp .ro{flex:1 1 auto}
+}
+
+/* fade the prose out while a project preview is up */
+body.previewing .panel.is-on{opacity:0;transform:translateY(-4px)}
+
+/* ── left · hover preview card (seungmee-lee.com) ─────────── */
+.preview{
+  position:fixed;
+  left:var(--pad);
+  top:50%;
+  /* fill the space up to the project list */
+  width:min(1120px, calc(100vw - var(--pad) * 2 - 372px));
+  transform:translateY(-50%) scale(.985);
+  opacity:0;visibility:hidden;
+  transition:opacity .3s ease,transform .45s cubic-bezier(.2,.7,.3,1),visibility .3s;
+  pointer-events:none;
+}
+.preview.is-on{opacity:1;visibility:visible;transform:translateY(-50%) scale(1)}
+
+.preview-media{
+  position:relative;
+  aspect-ratio:2/1;                          /* the covers are 1400x700 */
+  width:100%;
+  background-color:var(--field);
+  background-size:cover;
+  background-position:center;
+  position:relative;
+  overflow:hidden;
+}
+
+.preview-bar{
+  display:flex;justify-content:space-between;gap:24px;
+  padding:10px 12px;
+  background:var(--field);
+  font-size:11px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--ink);
+}
+.preview-desc{color:var(--mid);text-align:right}
+
+/* ── right · project list (seungmee-lee.com) ──────────────── */
+.projects{
+  position:fixed;
+  right:var(--pad);
+  bottom:var(--pad);
+  width:min(320px,32vw);
+}
+.projects ul{list-style:none}
+
+.row{border-bottom:1px solid var(--line)}
+.row:first-child{border-top:1px solid var(--line)}
+
+.row a{
+  display:flex;align-items:center;gap:16px;
+  padding:9px 2px;
+  color:var(--ink);
+  transition:color .25s ease;
+}
+
+.idx{position:relative;width:12px;flex:none;color:var(--dim)}
+.idx .ar{position:absolute;left:0;top:0;opacity:0;transition:opacity .2s ease}
+.idx .n{transition:opacity .2s ease}
+
+/* dim every row except the hovered one */
+.projects:hover .row a{color:var(--dim)}
+.projects:hover .row:hover a{color:var(--ink)}
+.row:hover .idx{color:var(--ink)}
+.row:hover .idx .n{opacity:0}
+.row:hover .idx .ar{opacity:1}
+
+/* per-character colour sweep across the hovered title */
+.row .name .ch{transition:color .18s ease;transition-delay:var(--cd,0ms)}
+.row:hover .name .ch{color:var(--accent)}
+
+/* ── bottom left · pill nav ───────────────────────────────── */
+.pill{
+  position:fixed;
+  white-space:nowrap;
+  left:var(--pad);bottom:var(--pad);
+  display:flex;align-items:center;gap:18px;
+  padding:9px 16px;
+  border-radius:999px;
+  background:var(--field);
+  backdrop-filter:blur(6px);
+}
+.pill .here{display:flex;align-items:center;gap:.45em;color:var(--ink)}
+.pill .pin{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--accent);
+  transition:background .5s ease;
+}
+.pill .sep{color:var(--dim)}
+.pill .home{
+  color:var(--ink);letter-spacing:.07em;
+  transition:color .2s ease;
+}
+.pill .home:hover{color:var(--accent)}
+.pill .pnav{color:var(--dim);transition:color .2s ease;letter-spacing:.07em}
+.pill .pnav:hover,.pill .pnav.is-on{color:var(--ink)}
+.pill .ico{font-size:13px;line-height:1}
+
+/* ── entrance: per-character reveal ───────────────────────── */
+.ch{
+  display:inline-block;
+  white-space:pre;
+  animation:chIn .55s cubic-bezier(.2,.7,.3,1) both;
+  animation-delay:var(--d,0ms);
+}
+@keyframes chIn{
+  from{opacity:0;transform:translateY(.4em)}
+  to  {opacity:1;transform:none}
+}
+
+[data-seq]{animation:fadeIn .6s ease both;animation-delay:var(--sd,0ms)}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+.row,
+.exp li{animation:rowIn .5s cubic-bezier(.2,.7,.3,1) both;animation-delay:var(--rd,0ms)}
+@keyframes rowIn{
+  from{opacity:0;transform:translateY(6px)}
+  to  {opacity:1;transform:none}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .ch,[data-seq],.row,.exp li,.obj img,.obj .ph{animation:none}
+}
+
+/* ── narrow screens ───────────────────────────────────────── */
+@media (max-width:900px){
+  :root{--pad:20px;--col:auto}
+  body{overflow:auto}
+  .stage{height:auto;min-height:100%;padding:var(--pad) var(--pad) 96px}
+  .left{position:static;width:100%;min-height:1px}
+  .panel{position:static}
+  .panel:not(.is-on){display:none}
+  .preview{display:none}
+  .projects{position:static;width:100%;margin-top:44px}
+  .pill{
+    position:fixed;left:var(--pad);right:var(--pad);bottom:var(--pad);
+    justify-content:space-between;gap:12px;overflow-x:auto;
+  }
+  .pill .nm,.pill .sep{display:none}
+  body.previewing .panel.is-on{opacity:1;transform:none}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .row:hover .name{color:var(--accent)}
+}
+
+/* ── loose objects · drag them around (andychung.me) ──────── */
+.objects{
+  position:fixed;
+  left:calc(var(--pad) - 4px);
+  bottom:calc(var(--pad) + 62px);
+  width:min(380px,42vw);
+  height:244px;
+  transform:scale(var(--os,1));      /* shrunk by script.js if the prose runs long */
+  transform-origin:left bottom;
+  transition:opacity .3s ease,transform .3s ease;
+}
+body.previewing .objects,
+.objects.is-away{opacity:0;pointer-events:none}
+
+.obj{
+  position:absolute;top:0;left:0;
+  z-index:var(--z,1);
+  transform:translate(var(--x,0px),var(--y,0px)) rotate(var(--r,0deg));
+  cursor:grab;
+  touch-action:none;
+  user-select:none;-webkit-user-select:none;
+  transition:filter .25s ease;
+}
+.obj:active{cursor:grabbing}
+.obj.is-held{transition:none;filter:brightness(1.03)}
+.obj img{display:block;-webkit-user-drag:none;pointer-events:none}
+
+.obj .ph{                                   /* shown when the file is missing */
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  padding:10px;white-space:pre-line;
+  border:1px dashed var(--dim);border-radius:12px;background:var(--field);
+  font-size:9px;line-height:1.6;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);
+}
+
+.mirror img{                                /* just a round photo */
+  display:block;width:152px;height:152px;border-radius:50%;
+}
+.polaroid img{                              /* the polaroid keeps its own white frame */
+  width:98px;height:auto;border-radius:2px;
+}
+/* they drop in with the rest of the entrance */
+.obj img,.obj .ph{
+  animation:objIn .85s cubic-bezier(.2,.7,.3,1) both;
+  animation-delay:var(--od,0ms);
+}
+@keyframes objIn{
+  from{opacity:0;transform:translateY(18px) rotate(5deg) scale(.97)}
+  to  {opacity:1;transform:none}
+}
+.mirror .ph{width:152px;height:152px;border-radius:50%}
+.polaroid .ph{width:98px;height:156px}
+
+/* keep whole words together while every character animates in */
+.w{display:inline-block;white-space:nowrap}
+
+
+/* ── detail layer · the case study, in this site's own skin ─── */
+.sheet{position:fixed;inset:0;z-index:50}
+.sheet[hidden]{display:none}
+
+.sheet-back{
+  position:absolute;inset:0;
+  background:var(--scrim);
+  backdrop-filter:blur(3px);
+  opacity:0;transition:opacity .3s ease;
+}
+.sheet-panel{
+  position:absolute;left:50%;bottom:0;
+  width:calc(100% - 24px);max-width:1680px;
+  height:calc(100% - 18px);
+  display:flex;flex-direction:column;overflow:hidden;
+  background:var(--bg);
+  border:1px solid var(--line);border-bottom:0;
+  border-radius:14px 14px 0 0;
+  opacity:0;transform:translate(-50%,26px);
+  transition:transform .42s cubic-bezier(.2,.7,.3,1),opacity .28s ease;
+}
+.sheet.is-on .sheet-back{opacity:1}
+.sheet.is-on .sheet-panel{opacity:1;transform:translate(-50%,0)}
+
+.sheet-bar{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  flex:none;padding:13px 18px;
+  border-bottom:1px solid var(--line);
+  font-size:12px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--ink);
+}
+.sheet-id{display:flex;align-items:baseline;gap:14px}
+.sheet-id #sheet-num{color:var(--dim)}
+.sheet-acts{display:flex;gap:18px}
+.sheet-acts a,.sheet-acts button{
+  color:var(--dim);letter-spacing:.07em;transition:color .2s ease;
+}
+.sheet-acts a:hover,.sheet-acts button:hover{color:var(--ink)}
+
+.sheet-body{
+  flex:1;min-height:0;
+  overflow:auto;overscroll-behavior:contain;
+}
+
+/* the opening hero: full width, and it hands over as you scroll */
+.case-hero{
+  display:block;max-width:1000px;margin:0 auto;
+  padding:34px 36px 30px;
+  opacity:calc(1 - var(--p, 0));
+  transform:translateY(calc(var(--p, 0) * -14px));
+  transition:opacity .12s linear;
+  will-change:opacity,transform;
+  pointer-events:none;
+}
+.case-hero .case-cover{margin-bottom:26px}
+.case-hero h1{font-size:clamp(24px,2.9vw,34px);line-height:1.28;margin-bottom:26px}
+.case-hero .case-meta{margin-bottom:26px}
+.case-intro{margin:0;color:var(--mid);max-width:70ch}
+
+/* then the two columns: the overview pins, the story scrolls */
+.case-split{
+  display:grid;grid-template-columns:minmax(320px,36%) 1fr;
+  align-items:start;
+}
+.case-side{
+  position:sticky;top:0;
+  padding:26px 30px 34px;
+  border-right:1px solid var(--line);
+  opacity:var(--p, 0);
+  transition:opacity .12s linear;
+}
+.case{max-width:780px;margin:0 auto;padding:26px 36px 120px}
+.case-cover{
+  display:block;width:100%;height:auto;
+  border-radius:10px;margin-bottom:24px;
+}
+.case-eyebrow{
+  font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--dim);margin-bottom:12px;
+}
+.case h1,.case-side h1{                      /* the question lives in the side column */
+  font-size:clamp(21px,1.9vw,27px);line-height:1.38;font-weight:500;
+  margin-bottom:26px;
+}
+.case-meta{
+  display:flex;flex-wrap:wrap;gap:10px 32px;
+  padding:14px 1px;margin-bottom:34px;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  font-size:12px;line-height:1.4;
+}
+.case-meta span{display:flex;flex-direction:column;gap:3px}
+.case-meta b{
+  font-size:10px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--dim);
+}
+.case h2{
+  margin:46px 0 14px;padding-top:15px;
+  border-top:1px solid var(--line);
+  font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--dim);
+}
+.case > :first-child{margin-top:0;padding-top:0;border-top:0}   /* no stray rule at the top */
+.case h3{font-size:18px;line-height:1.45;font-weight:500;margin:22px 0 12px}
+.case h4{font-size:14px;font-weight:600;margin:26px 0 8px}
+.case p{margin:0 0 16px}
+.case ul{margin:0 0 20px;padding-left:18px}
+.case li{margin-bottom:8px}
+.case-media{
+  display:block;width:100%;height:auto;
+  margin:24px 0 26px;
+  border-radius:10px;
+  background:var(--field);
+}
+video.case-media{min-height:140px}
+.case .case-kicker{
+  font-size:10.5px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--dim);margin:26px 0 8px;
+}
+.case-link{
+  display:inline-block;margin:4px 0 22px;
+  font-size:12px;letter-spacing:.06em;text-transform:uppercase;
+  border-bottom:1px solid var(--dim);padding-bottom:2px;
+  transition:color .2s ease,border-color .2s ease;
+}
+.case-link:hover{color:var(--accent);border-color:var(--accent)}
+
+.case .cap{
+  font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--dim);margin:30px 0 12px;
+}
+.case .fail{color:var(--mid)}
+
+body.sheeting{overflow:hidden}
+
+@media (max-width:900px){
+  .sheet-panel{width:100%;height:calc(100% - 16px);border-radius:12px 12px 0 0}
+  .case-hero{padding:26px 20px 22px}
+  .case-split{display:block}
+  .case-side{display:none}                 /* one column: the hero already said it */
+  .case{max-width:none;padding:8px 20px 96px}
+}
+
+/* mobile placement for the loose objects — must come after the base rules above */
+@media (max-width:900px){
+  .objects{
+    position:relative;   /* static would let the absolute children escape to .stage */
+    left:auto;bottom:auto;   /* the desktop rule offsets a relative box, overlapping the prose */
+    width:100%;height:250px;margin-top:32px;
+    transform:none;
+  }
+}
+
+/* ── case study components, drawn in this site's own skin ──── */
+.c-box{
+  border:1px solid var(--line);border-radius:10px;
+  padding:20px 20px 18px;margin:28px 0 30px;
+}
+.case .c-cap{
+  font-size:10.5px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--dim);margin:0 0 14px;
+}
+.case .c-note{
+  font-size:12px;line-height:1.5;color:var(--mid);
+  margin:24px 0 0;padding-top:16px;border-top:1px solid var(--line);
+}
+
+/* labelled bars */
+.c-bar{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.c-bar:last-child{margin-bottom:0}
+.c-bar-label{flex:0 0 40%;font-size:12px;color:var(--mid)}
+.c-track{flex:1;height:8px;border-radius:5px;background:var(--field);overflow:hidden}
+.c-fill{display:block;height:100%;border-radius:5px;background:var(--dim)}
+.c-bar-note{flex:0 0 auto;min-width:74px;text-align:right;font-size:11px;color:var(--dim)}
+.c-bar.is-key .c-bar-label{color:var(--ink)}
+.c-bar.is-key .c-fill{background:var(--accent)}
+.c-bar.is-key .c-bar-note{color:var(--accent)}
+
+/* number + caption */
+.c-stats{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+  margin:26px 0 28px;background:var(--line);
+  border:1px solid var(--line);border-radius:10px;overflow:hidden;
+}
+.c-stat{display:flex;flex-direction:column;gap:6px;padding:16px 16px 18px;background:var(--bg)}
+.c-stat b{font-size:20px;font-weight:600;line-height:1.1}
+.c-stat span{font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);line-height:1.5}
+
+/* numbered steps, the hybrid loop, the two journeys */
+.c-steps,.c-flow,.c-journey{display:grid;gap:16px}
+.c-steps{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.c-flow,.c-journey{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.c-journey{margin:26px 0 32px}
+.c-step{
+  display:flex;flex-direction:column;gap:6px;
+  padding:14px;border:1px solid var(--line);border-radius:8px;
+}
+.c-journey .c-step,.c-flow .c-step{background:var(--field);border-color:transparent}
+.c-step-k{
+  font-size:10px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--accent);
+}
+.c-step strong{font-size:13.5px;font-weight:600;line-height:1.4}
+.c-step-x{font-size:12px;line-height:1.5;color:var(--mid)}
+
+/* the "load the prototype" box */
+.c-cta{
+  display:flex;align-items:center;gap:14px;
+  padding:16px 18px;margin:26px 0 28px;
+  border:1px solid var(--line);border-radius:10px;
+  transition:border-color .2s ease;
+}
+a.c-cta:hover{border-color:var(--accent)}
+.c-cta-play{
+  flex:none;width:30px;height:30px;border-radius:50%;
+  display:grid;place-items:center;font-size:10px;
+  background:var(--field);color:var(--ink);
+}
+a.c-cta:hover .c-cta-play{background:var(--accent);color:#fff}
+.c-cta-t{display:flex;flex-direction:column;gap:3px;min-width:0}
+.c-cta-t strong{font-size:13.5px;font-weight:600}
+.c-cta-t span{font-size:11.5px;color:var(--dim);overflow:hidden;text-overflow:ellipsis}
+
+/* the summariser wireframes */
+.c-wire-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.c-wire-tabs span{
+  font-size:10.5px;letter-spacing:.06em;padding:5px 10px;border-radius:5px;
+  background:var(--field);color:var(--dim);
+}
+.c-wire-tabs .is-on{background:var(--accent);color:#fff}
+.c-wire-cols{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.c-wire-col{display:flex;flex-direction:column;gap:7px}
+.case .c-wire-col .c-cap{margin-bottom:2px}
+.c-skel{display:block;height:7px;border-radius:4px;background:var(--field)}
+.c-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:5px}
+.c-chips span{
+  font-size:10px;letter-spacing:.05em;padding:3px 8px;border-radius:4px;
+  border:1px solid var(--line);color:var(--mid);
+}
+
+/* quote attribution + persona headings */
+.case .c-cite{
+  font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--dim);margin:0 0 24px;
+}
+.case .c-persona{
+  display:flex;align-items:baseline;gap:12px;
+  margin:34px 0 14px;padding-top:14px;border-top:1px solid var(--line);
+}
+.c-persona strong{font-size:15px;font-weight:600}
+.c-persona span{font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+
+.c-figure{margin:0}
+.c-figure .case-media{margin-bottom:12px}
+.c-figure .cap{margin:0 0 30px}
+
+@media (max-width:640px){
+  .c-bar{flex-wrap:wrap}
+  .c-bar-label{flex:1 1 100%}
+  .c-wire-cols{grid-template-columns:1fr}
+}
+
+/* ── the structures the original page laid out visually ─────── */
+.c-phases,.c-walk{list-style:none;margin:24px 0 30px;padding:0;counter-reset:step}
+.c-phases li,.c-walk li{
+  position:relative;display:flex;gap:16px;
+  padding:0 0 20px 0;
+}
+.c-phases li:not(:last-child)::before,
+.c-walk li:not(:last-child)::before{
+  content:"";position:absolute;left:13px;top:26px;bottom:2px;width:1px;background:var(--line);
+}
+.c-phases li::marker,.c-walk li::marker{content:""}
+.c-phases li>.c-phase-n,.c-walk li>.c-phase-n{
+  display:grid;place-items:center;flex:none;
+  width:27px;height:27px;border-radius:50%;
+  border:1px solid var(--line);background:var(--bg);
+  font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--accent);
+}
+.c-phases li>div,.c-walk li>div{padding-top:2px}
+.c-phases strong,.c-walk strong{
+  display:block;font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink);margin-bottom:5px;
+}
+.c-phases p,.c-walk p{margin:0;color:var(--mid)}
+.c-walk strong{text-transform:none;letter-spacing:0;font-size:14.5px}
+
+.c-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin:26px 0 32px}
+
+.c-feature{margin:30px 0 34px}
+.c-feature h4{margin:6px 0 10px;font-size:16px;font-weight:600}
+.c-feature p{margin:0 0 14px;color:var(--mid)}
+
+.c-personas{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin:26px 0 32px}
+.c-persona-card{
+  display:flex;flex-direction:column;gap:8px;
+  padding:16px;border:1px solid var(--line);border-radius:9px;
+}
+.c-persona-card strong{font-size:14px;font-weight:600}
+.c-persona-card p{margin:0;font-size:13px;line-height:1.55;color:var(--mid)}
+.c-tag{
+  margin-top:auto;padding-top:10px;border-top:1px solid var(--line);
+  font-size:10px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);
+}
+
+.c-callout{
+  margin:24px 0 28px;padding:16px 18px;
+  border-left:2px solid var(--accent);background:var(--field);
+  border-radius:0 8px 8px 0;
+}
+.case .c-callout .c-cap{margin-bottom:8px}
+.c-callout p:last-child{margin-bottom:0}
+
+.c-quote{
+  margin:22px 0 30px;padding:0 0 0 20px;border-left:1px solid var(--line);
+}
+.c-quote p{font-size:17px;line-height:1.55;color:var(--ink);margin:0 0 10px}
+.c-quote cite{
+  font-style:normal;font-size:10.5px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--dim);
+}
+
+.c-takeaways{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;margin:26px 0 32px}
+.c-takeaway{
+  display:flex;flex-direction:column;gap:8px;
+  padding:16px;border-top:2px solid var(--line);
+}
+.c-takeaway strong{font-size:14.5px;font-weight:600;line-height:1.4}
+.c-takeaway p{margin:0;font-size:13.5px;line-height:1.6;color:var(--mid)}
+
+.c-list{list-style:none;margin:20px 0 26px;padding:0}
+.c-list li{
+  position:relative;padding:0 0 12px 22px;margin:0;
+  font-size:14px;line-height:1.6;color:var(--mid);
+}
+.c-list li::before{
+  content:"→";position:absolute;left:0;top:0;color:var(--accent);font-size:12px;
+}
+
+.case .c-outcome{margin:10px 0 22px}
+.c-outcome span{
+  display:inline-block;padding:6px 11px;border-radius:5px;
+  background:var(--field);
+  font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);
+}
+.case .c-legend{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 16px}
+.c-legend span{
+  font-size:10px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);
+}
+.c-row-k{
+  font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--dim);margin-top:6px;
+}
+.c-row-k + .c-step-x{margin-top:-2px}
+
+/* her own thumbnails: the real app running, with the still underneath */
+.thumb-stage{
+  position:absolute;inset:0;
+  background-size:cover;background-position:center;background-color:var(--field);
+}
+.thumb-stage[hidden]{display:none}
+.thumb-stage > *{display:block;width:100%;height:100%}
+.case-cover.thumb-stage{
+  position:relative;width:100%;aspect-ratio:16/8;
+  border-radius:10px;overflow:hidden;margin-bottom:24px;
+}
+.preview-media .thumb-stage{border-radius:0}
+
+/* the three categories on each case */
+.case .case-tags,.case-side .case-tags,.case-hero .case-tags{
+  display:flex;flex-wrap:wrap;gap:6px;margin:18px 0 16px;
+}
+.case-tags span{
+  padding:5px 11px;border-radius:100px;
+  background:var(--field);
+  font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--mid);
+}
+.case-hero .case-tags{margin:20px 0 14px}
+.case-side .case-tags{margin:16px 0 12px}
+.case-side .case-tags span{padding:4px 9px;font-size:9.5px}

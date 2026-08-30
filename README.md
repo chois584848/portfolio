@@ -1,17 +1,13 @@
-# Seyeon Choi — Portfolio (static build)
+# Se Yeon Choi — Portfolio
 
-Self-contained static site. Every page has its assets, fonts, and scripts inlined, so it works offline and on any static host. All pages link to each other.
+최세연의 포트폴리오 사이트입니다.
 
-## Files
-- `index.html` — home (entry point; duplicate of "Living System.dc.html")
-- `Living System.dc.html` — home
-- `LS Case 01 Trust.dc.html` … `LS Case 04 Legibility.dc.html` — case studies
-- `About.dc.html`, `Resume.dc.html`
+로컬에서 보려면:
 
-## Deploy to GitHub Pages
-1. Create a new repo, e.g. `portfolio`.
-2. Upload every file in this folder to the repo root (keep the filenames, spaces included).
-3. Repo → **Settings → Pages** → Source: **Deploy from a branch** → Branch: `main` / `/root` → Save.
-4. Wait ~1 min. Site is live at `https://<username>.github.io/portfolio/`.
+```bash
+node _dev/serve.js
+```
 
-GitHub Pages serves `index.html` automatically, and the internal links resolve to the sibling pages.
+그리고 http://localhost:5199 에 접속하세요.
+
+<sub>파일 구조나 에셋을 다시 만드는 방법은 `_dev/NOTES.txt`에 있습니다.</sub>

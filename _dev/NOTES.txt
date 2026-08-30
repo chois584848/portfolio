@@ -1,0 +1,43 @@
+mirror.webp    the round photo on the home screen: a square crop of the
+               station photo cut to a clean circle, 620x620. No distortion,
+               no glass overlay. Regenerate (or re-frame) with
+               /usr/bin/python3 _dev/make_mirror.py <photo>
+polaroid.jpg   the "MEI" polaroid that sits beside it, cut out of
+               ~/Downloads/IMG_9963.jpeg (straightened, cropped to the
+               polaroid's own white frame, 360x573). Tilted -5°.
+cover-1..4.webp  stills of those same thumbnails. They are only the instant
+               placeholder painted behind each live thumbnail while its app
+               boots (and the fallback if thumbs.js fails to load).
+                 cover-1 AutoView · cover-2 Text Humanizer
+                 cover-3 Context Generator · cover-4 AI Summarizer
+
+A missing file shows a dashed placeholder instead of breaking the layout.
+No drop shadows on the loose objects, by request.
+
+Clicking a project opens its case study in a layer over the page (.sheet in
+index.html / style.css), rendered in this site's own type and colours from
+cases.json.
+
+assets/case/  only real media — nothing here is a screenshot:
+  c<N>-v<i>.mp4   the demo videos from her page bundle (~2-3MB each, and
+                  they only load once scrolled into view)
+  c1-i1.png       the Figma design-board image
+  N is the project number: c1 AutoView · c2 Text Humanizer
+                           c3 Context Generator · c4 AI Summarizer
+
+thumbs.js      her own thumbnail web components, taken from her page bundle.
+               Each one is a branded stage with the REAL app running inside an
+               iframe (autoview / text-humanizer / ai-summarizer / design-to-dev
+               on seyeonchoi.work). The home hover preview, the popup's opening
+               hero and its pinned column all run these — nothing there is a
+               screenshot. Refresh with:
+                 /usr/bin/python3 _dev/get_thumbs.py
+
+Nothing else in that layer is an image. The boxed figures (bar charts, the
+three steps, the hybrid loop, the journey maps, the wireframes, stat strips,
+prototype buttons) AND the sets the original page laid out visually (the
+PHASE timeline, problem cards, personas, the user journey, callouts, quotes,
+takeaways) are all drawn by the .c-* components in style.css from cases.json,
+so they follow the theme and the visitor colour.
+Nothing links back to seyeonchoi.work any more — the layer is the case study.
+The only outbound links are her own live prototypes (chois584848.github.io).
